@@ -25,6 +25,7 @@ search:
     - path: v1/search/
       response:
         type: json
+      categories: [2000, 5000]
     - path: v1/search/
       response:
         type: json
