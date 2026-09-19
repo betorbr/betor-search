@@ -11,15 +11,17 @@ type CatalogStatus interface {
 	LastExecution() time.Time
 	LastSuccess() *time.Time
 	LastError() string
+	StartedAt() time.Time
 }
 
 type Component struct {
-	Name    string
-	Status  string
-	Updated time.Time
-	LastRun time.Time
-	Message string
-	Catalog CatalogStatus
+	Name      string
+	Status    string
+	Updated   time.Time
+	LastRun   time.Time
+	StartedAt time.Time
+	Message   string
+	Catalog   CatalogStatus
 }
 
 type Service struct {
@@ -49,11 +51,12 @@ func (s Service) Response(now time.Time) contract.Response {
 		}
 
 		component := contract.Component{
-			Name:    s.componentName,
-			Status:  componentStatus,
-			Updated: now.UTC(),
-			LastRun: s.catalog.LastExecution().UTC(),
-			Message: s.catalog.LastError(),
+			Name:      s.componentName,
+			Status:    componentStatus,
+			Updated:   now.UTC(),
+			LastRun:   s.catalog.LastExecution().UTC(),
+			StartedAt: s.catalog.StartedAt().UTC(),
+			Message:   s.catalog.LastError(),
 		}
 		if s.catalog.LastSuccess() != nil {
 			component.Updated = s.catalog.LastSuccess().UTC()

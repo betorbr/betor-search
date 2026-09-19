@@ -1,6 +1,7 @@
 package application
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -111,6 +112,35 @@ func TestDecodeItems_AllowsSingleItemObject(t *testing.T) {
 	}
 	if items[0].TorrentName != "Movie A" {
 		t.Fatalf("items[0].TorrentName = %q, want Movie A", items[0].TorrentName)
+	}
+}
+
+func TestService_StartBackgroundSync_RefreshesOnInterval(t *testing.T) {
+	var calls int
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls++
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"items":[{"id":"` + string(rune('A'+calls-1)) + `","provider_slug":"test","provider_url":"https://example.com/1","item_type":"movie","magnet_uri":"magnet:?xt=urn:btih:1","magnet_xt":"urn:btih:1","torrent_name":"Movie ` + string(rune('A'+calls-1)) + `","inserted_at":"2024-01-01T00:00:00Z"}]}`))
+	}))
+	defer server.Close()
+
+	service := NewService(server.URL, 10*time.Millisecond)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go service.StartBackgroundSync(ctx)
+
+	deadline := time.Now().Add(500 * time.Millisecond)
+	for time.Now().Before(deadline) {
+		if calls >= 2 {
+			break
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	if calls < 2 {
+		t.Fatalf("expected at least 2 sync calls within 500ms, got %d", calls)
+	}
+	if !service.HasHealthyData() {
+		t.Fatal("catalog was not populated after background syncs")
 	}
 }
 

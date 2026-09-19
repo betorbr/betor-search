@@ -1,10 +1,12 @@
 package application
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -152,6 +154,7 @@ type Service struct {
 	lastError      string
 	baseURL        string
 	updateInterval time.Duration
+	startedAt      time.Time
 }
 
 func NewService(baseURL string, interval time.Duration) Service {
@@ -165,6 +168,7 @@ func NewService(baseURL string, interval time.Duration) Service {
 		status:         "DOWN",
 		baseURL:        normalizeBaseURL(baseURL),
 		updateInterval: interval,
+		startedAt:      time.Now().UTC(),
 	}
 }
 
@@ -338,6 +342,12 @@ func (s Service) LastError() string {
 	return s.lastError
 }
 
+func (s Service) StartedAt() time.Time {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.startedAt
+}
+
 func (s Service) Items() []Item {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -350,6 +360,29 @@ func (s Service) HasHealthyData() bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return len(s.items) > 0
+}
+
+func (s *Service) StartBackgroundSync(ctx context.Context) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	if err := s.Sync(); err != nil {
+		log.Printf("initial catalog sync failed: %v", err)
+	}
+
+	ticker := time.NewTicker(s.updateInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			if err := s.Sync(); err != nil {
+				log.Printf("catalog sync failed: %v", err)
+			}
+		}
+	}
 }
 
 func matchQuery(item Item, query string, filter SearchFilter) bool {

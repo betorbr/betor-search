@@ -1,9 +1,12 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"betor-search/internal/health/application"
@@ -13,17 +16,16 @@ import (
 )
 
 func main() {
-	catalogService := searchApplication.NewService("", 30*time.Minute)
 	searchInterval := 30 * time.Minute
 	if value := os.Getenv("BETOR_SEARCH_UPDATE_INTERVAL_MINUTES"); value != "" {
 		if parsedMinutes, err := time.ParseDuration(value + "m"); err == nil {
 			searchInterval = parsedMinutes
 		}
 	}
-	catalogService = searchApplication.NewService("", searchInterval)
-	if err := catalogService.Sync(); err != nil {
-		log.Printf("initial catalog sync failed: %v", err)
-	}
+	catalogService := searchApplication.NewService("", searchInterval)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	go catalogService.StartBackgroundSync(ctx)
 
 	healthService := application.NewServiceWithCatalog("betor-search-catalog", catalogService)
 	mux := http.NewServeMux()
