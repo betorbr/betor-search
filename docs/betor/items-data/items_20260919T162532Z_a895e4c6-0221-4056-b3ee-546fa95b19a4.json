@@ -1,0 +1,39 @@
+[
+  {
+    "id": "68a7ceabb9819d1969e8c751",
+    "provider_slug": "bludv",
+    "provider_url": "https://bludv.xyz/moana-um-mar-de-aventuras-torrent-bluray-720p-1080p-4k-3d-dual-audio-download-2016/",
+    "imdb_id": "tt3521164",
+    "imdb_score_value": null,
+    "tmdb_id": "45890",
+    "tmdb_score_value": null,
+    "item_type": "movie",
+    "magnet_uri": "magnet:?xt=urn:btih:HOEIVDX2YOEJPOQAZQI5CR2XQER6RGUY",
+    "magnet_xt": "urn:btih:HOEIVDX2YOEJPOQAZQI5CR2XQER6RGUY",
+    "magnet_dn": null,
+    "torrent_name": "Moana - Um Mar de Aventuras 2017 WWW.BLUDV.COM",
+    "torrent_num_peers": 3,
+    "torrent_num_seeds": 0,
+    "torrent_files": [
+      "Moana.Um.Mar.de.Aventuras.2017.720p.BluRay.5.1.x264.DUAL-WWW.BLUDV.COM.FORCED.srt",
+      "Leia.txt",
+      "Moana.Um.Mar.de.Aventuras.2017.720p.BluRay.5.1.x264.DUAL-WWW.BLUDV.COM.srt",
+      "Moana.Um.Mar.de.Aventuras.2017.720p.BluRay.5.1.x264.DUAL-WWW.BLUDV.COM.mkv"
+    ],
+    "torrent_size": 1148698576,
+    "torrent_failure_history": [],
+    "torrent_failure_days": 0,
+    "torrent_is_dying": false,
+    "torrent_is_dead": false,
+    "download_path": null,
+    "languages": [
+      "pt",
+      "en"
+    ],
+    "episodes": [],
+    "seasons": [],
+    "inserted_at": "2025-08-22 01:58:03.605000",
+    "updated_at": "2025-08-25 21:58:42.625000",
+    "download_url": null
+  }
+]

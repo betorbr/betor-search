@@ -31,6 +31,31 @@ Com porta customizada:
 PORT=9090 go run ./cmd/server
 ```
 
+## Variáveis de ambiente
+
+| Variável | Descrição | Valor padrão |
+| --- | --- | --- |
+| `PORT` | Porta HTTP em que o serviço irá escutar. | `8080` |
+| `BETOR_SEARCH_API_BASE_URL` | Base URL da API pública do BeTor usada para montar o endpoint de itens. | `https://api.betor.top/` |
+| `BETOR_SEARCH_API_AUTHORIZATION_BASIC_VALUE` | Valor do header `Authorization: Basic ...` já codificado em Base64 e pronto para uso. Quando vazio, a aplicação não envia o header. | vazio |
+| `BETOR_SEARCH_UPDATE_INTERVAL_MINUTES` | Intervalo, em minutos, entre cada sincronização do catálogo em memória com a API do BeTor. | `30` |
+| `BETOR_SEARCH_DOWNLOAD_ITEMS_URL` | URL completa opcional para sobrescrever o endpoint de dump de itens. Quando não definida, o serviço combina `BETOR_SEARCH_API_BASE_URL` com `/v1/admin/download-items/`. | `https://api.betor.top/v1/admin/download-items/` |
+| `BETOR_SEARCH_COMPONENT_NAME` | Nome do componente de catálogo usado em logs e observabilidade do health. | `betor-search-catalog` |
+
+Quando `BETOR_SEARCH_API_AUTHORIZATION_BASIC_VALUE` estiver preenchido, a aplicação envia o header `Authorization: Basic <valor>` no request de sincronização do catálogo. Quando estiver vazio, o header é omitido.
+
+Exemplo de execução com variáveis customizadas:
+
+```bash
+PORT=9090 \
+BETOR_SEARCH_API_BASE_URL=https://api.betor.top/ \
+BETOR_SEARCH_API_AUTHORIZATION_BASIC_VALUE=$(printf '%s' 'betor:senha' | base64) \
+BETOR_SEARCH_UPDATE_INTERVAL_MINUTES=15 \
+BETOR_SEARCH_DOWNLOAD_ITEMS_URL=https://api.betor.top/v1/admin/download-items/ \
+BETOR_SEARCH_COMPONENT_NAME=betor-catalog \
+go run ./cmd/server
+```
+
 ## Validar endpoint de health
 
 Requisição GET:

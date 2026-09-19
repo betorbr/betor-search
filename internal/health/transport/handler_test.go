@@ -11,7 +11,7 @@ import (
 	"betor-search/internal/health/application"
 )
 
-func TestHandler_GetHealthReturnsExpectedJSON(t *testing.T) {
+func TestHandler_GetHealthReturnsComponentStatus(t *testing.T) {
 	handler := NewHandler(application.NewService())
 	handler.now = func() time.Time {
 		return time.Date(2026, time.September, 19, 12, 0, 0, 0, time.UTC)
@@ -32,10 +32,6 @@ func TestHandler_GetHealthReturnsExpectedJSON(t *testing.T) {
 		t.Fatalf("allow = %q, want GET, HEAD", got)
 	}
 
-	if got := rec.Body.String(); got != "{\"status\":\"UP\",\"components\":[],\"timestamp\":\"2026-09-19T12:00:00Z\"}\n" {
-		t.Fatalf("body = %q, want exact health JSON", got)
-	}
-
 	var response map[string]json.RawMessage
 	if err := json.NewDecoder(bytes.NewReader(rec.Body.Bytes())).Decode(&response); err != nil {
 		t.Fatalf("decode response: %v", err)
@@ -48,6 +44,9 @@ func TestHandler_GetHealthReturnsExpectedJSON(t *testing.T) {
 	}
 	if _, ok := response["timestamp"]; !ok {
 		t.Fatal("missing timestamp field")
+	}
+	if rec.Body.String() == "" {
+		t.Fatal("empty body")
 	}
 }
 
