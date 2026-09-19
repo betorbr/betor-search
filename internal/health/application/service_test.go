@@ -10,14 +10,12 @@ type fakeCatalog struct {
 	lastExecution time.Time
 	lastSuccess   *time.Time
 	lastError     string
-	startedAt     time.Time
 }
 
 func (f fakeCatalog) Status() string           { return f.status }
 func (f fakeCatalog) LastExecution() time.Time { return f.lastExecution }
 func (f fakeCatalog) LastSuccess() *time.Time  { return f.lastSuccess }
 func (f fakeCatalog) LastError() string        { return f.lastError }
-func (f fakeCatalog) StartedAt() time.Time     { return f.startedAt }
 
 func TestService_ResponseReflectsCatalogComponentStatus(t *testing.T) {
 	lastSuccess := time.Date(2026, time.September, 19, 16, 0, 0, 0, time.UTC)
@@ -41,20 +39,14 @@ func TestService_ResponseReflectsCatalogComponentStatus(t *testing.T) {
 	if response.Components[0].Status != "DEGRADED" {
 		t.Fatalf("component status = %q, want DEGRADED", response.Components[0].Status)
 	}
-	if !response.Components[0].StartedAt.IsZero() {
-		t.Fatalf("started_at should be zero when catalog does not provide it")
-	}
-
-	startedAt := time.Date(2026, time.September, 19, 15, 30, 0, 0, time.UTC)
 	serviceWithStartedAt := NewServiceWithCatalog("betor-search-catalog", fakeCatalog{
 		status:        "UP",
 		lastExecution: time.Date(2026, time.September, 19, 16, 1, 0, 0, time.UTC),
 		lastSuccess:   &lastSuccess,
 		lastError:     "",
-		startedAt:     startedAt,
 	})
 	responseWithStartedAt := serviceWithStartedAt.Response(time.Date(2026, time.September, 19, 16, 2, 0, 0, time.UTC))
-	if responseWithStartedAt.Components[0].StartedAt != startedAt {
-		t.Fatalf("started_at = %v, want %v", responseWithStartedAt.Components[0].StartedAt, startedAt)
+	if responseWithStartedAt.StartedAt.IsZero() {
+		t.Fatal("started_at should reflect application start time")
 	}
 }
