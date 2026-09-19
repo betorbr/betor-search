@@ -25,6 +25,9 @@ search:
     - path: v1/search/
       response:
         type: json
+    - path: v1/search/
+      response:
+        type: json
       categories: [2000]
       inputs:
         item_type: movie
