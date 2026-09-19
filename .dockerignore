@@ -1,0 +1,10 @@
+.git
+.github
+.gitignore
+.env
+.tmp
+.uv-cache
+**/.DS_Store
+**/*.log
+bin/
+coverage.out
