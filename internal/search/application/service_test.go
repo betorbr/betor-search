@@ -153,10 +153,11 @@ func TestSearchService_QueryByItemType(t *testing.T) {
 }
 
 func TestSearchService_Pagination(t *testing.T) {
+	base := time.Date(2025, time.January, 1, 0, 0, 0, 0, time.UTC)
 	items := []Item{
-		{ID: "1", ItemType: "movie", TorrentName: "Movie 1", ProviderSlug: "test", ProviderURL: "https://example.com/1", MagnetURI: "magnet:?xt=urn:btih:1", MagnetXT: "urn:btih:1", Languages: []string{"pt-BR"}, InsertedAt: time.Now()},
-		{ID: "2", ItemType: "movie", TorrentName: "Movie 2", ProviderSlug: "test", ProviderURL: "https://example.com/2", MagnetURI: "magnet:?xt=urn:btih:2", MagnetXT: "urn:btih:2", Languages: []string{"pt-BR"}, InsertedAt: time.Now()},
-		{ID: "3", ItemType: "movie", TorrentName: "Movie 3", ProviderSlug: "test", ProviderURL: "https://example.com/3", MagnetURI: "magnet:?xt=urn:btih:3", MagnetXT: "urn:btih:3", Languages: []string{"pt-BR"}, InsertedAt: time.Now()},
+		{ID: "1", ItemType: "movie", TorrentName: "Movie 1", ProviderSlug: "test", ProviderURL: "https://example.com/1", MagnetURI: "magnet:?xt=urn:btih:1", MagnetXT: "urn:btih:1", Languages: []string{"pt-BR"}, InsertedAt: base},
+		{ID: "2", ItemType: "movie", TorrentName: "Movie 2", ProviderSlug: "test", ProviderURL: "https://example.com/2", MagnetURI: "magnet:?xt=urn:btih:2", MagnetXT: "urn:btih:2", Languages: []string{"pt-BR"}, InsertedAt: base.Add(1 * time.Hour)},
+		{ID: "3", ItemType: "movie", TorrentName: "Movie 3", ProviderSlug: "test", ProviderURL: "https://example.com/3", MagnetURI: "magnet:?xt=urn:btih:3", MagnetXT: "urn:btih:3", Languages: []string{"pt-BR"}, InsertedAt: base.Add(2 * time.Hour)},
 	}
 
 	service := Service{items: items}
@@ -167,7 +168,34 @@ func TestSearchService_Pagination(t *testing.T) {
 	if len(results.Items) != 1 {
 		t.Fatalf("len(items) = %d, want 1", len(results.Items))
 	}
-	if got := results.Items[0].ID; got != "3" {
-		t.Fatalf("result id = %q, want 3", got)
+	if got := results.Items[0].ID; got != "1" {
+		t.Fatalf("result id = %q, want 1", got)
+	}
+}
+
+func TestSearchService_SortsNewestFirst(t *testing.T) {
+	base := time.Date(2025, time.January, 1, 0, 0, 0, 0, time.UTC)
+	items := []Item{
+		{ID: "older", ItemType: "movie", TorrentName: "Older Movie", ProviderSlug: "test", ProviderURL: "https://example.com/older", MagnetURI: "magnet:?xt=urn:btih:older", MagnetXT: "urn:btih:older", Languages: []string{"pt-BR"}, InsertedAt: base.Add(-2 * time.Hour)},
+		{ID: "newest", ItemType: "movie", TorrentName: "Newest Movie", ProviderSlug: "test", ProviderURL: "https://example.com/newest", MagnetURI: "magnet:?xt=urn:btih:newest", MagnetXT: "urn:btih:newest", Languages: []string{"pt-BR"}, InsertedAt: base.Add(2 * time.Hour)},
+		{ID: "mid", ItemType: "movie", TorrentName: "Mid Movie", ProviderSlug: "test", ProviderURL: "https://example.com/mid", MagnetURI: "magnet:?xt=urn:btih:mid", MagnetXT: "urn:btih:mid", Languages: []string{"pt-BR"}, InsertedAt: base},
+	}
+
+	service := Service{items: items}
+	results, err := service.Search("Movie", SearchFilter{Page: 1, Size: 10})
+	if err != nil {
+		t.Fatalf("Search returned error: %v", err)
+	}
+	if len(results.Items) != 3 {
+		t.Fatalf("len(items) = %d, want 3", len(results.Items))
+	}
+	if got := results.Items[0].ID; got != "newest" {
+		t.Fatalf("first result id = %q, want newest", got)
+	}
+	if got := results.Items[1].ID; got != "mid" {
+		t.Fatalf("second result id = %q, want mid", got)
+	}
+	if got := results.Items[2].ID; got != "older" {
+		t.Fatalf("third result id = %q, want older", got)
 	}
 }

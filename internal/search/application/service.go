@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -249,6 +250,13 @@ func (s Service) Search(query string, filter SearchFilter) (SearchResult, error)
 		}
 		matches = append(matches, item)
 	}
+
+	sort.Slice(matches, func(i, j int) bool {
+		if matches[i].InsertedAt.Equal(matches[j].InsertedAt) {
+			return matches[i].ID > matches[j].ID
+		}
+		return matches[i].InsertedAt.After(matches[j].InsertedAt)
+	})
 
 	start := (filter.Page - 1) * filter.Size
 	if start >= len(matches) {
