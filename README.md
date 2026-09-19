@@ -1,5 +1,18 @@
 # Betor Search
 
+## Objetivo do projeto
+
+O Betor Search e uma camada de borda do ecossistema BeTor.
+O objetivo principal e integrar os dados de torrents (filmes e series) com metadados externos, expondo uma API versionada para consumo por ferramentas como Prowlarr e automacoes de busca focadas no publico brasileiro.
+
+## Indexer Cardigann
+
+Arquivo da definicao Cardigann atual:
+
+- [betor-search.yml](betor-search.yml)
+
+Esse arquivo pode ser usado como base para o indexer customizado no Prowlarr.
+
 ## Pre-requisitos
 
 - Go 1.26+

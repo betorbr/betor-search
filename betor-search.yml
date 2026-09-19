@@ -1,0 +1,103 @@
+---
+id: betor-search-api
+name: BeTor Search API (Brasil)
+description: "Filmes e series para o publico brasileiro por BeTor"
+language: pt-BR
+type: public
+encoding: UTF-8
+links:
+  - https://search.betor.top/
+
+caps:
+  categorymappings:
+    - {id: 2000, cat: Movies, desc: "Filmes"}
+    - {id: 5000, cat: TV, desc: "Series"}
+
+  modes:
+    search: [q]
+    tv-search: [q, season, ep, imdbid, tmdbid]
+    movie-search: [q, imdbid, tmdbid]
+
+settings: []
+
+search:
+  paths:
+    - path: v1/search/
+      response:
+        type: json
+      categories: [2000]
+      inputs:
+        item_type: movie
+    - path: v1/search/
+      response:
+        type: json
+      categories: [5000]
+      inputs:
+        item_type: tv
+
+  inputs:
+    q: "{{ .Keywords }}"
+    imdb_id: "{{ .Query.IMDBID }}"
+    tmdb_id: "{{ .Query.TMDBID }}"
+    season: "{{ .Query.Season }}"
+    episode: "{{ .Query.Ep }}"
+
+  rows:
+    selector: items
+
+  fields:
+    category:
+      selector: item_type
+      case:
+        movie: 2000
+        tv: 5000
+    title_name:
+      selector: torrent_name
+      optional: true
+    title_dn:
+      selector: magnet_dn
+      optional: true
+    title_xt:
+      selector: magnet_xt
+      optional: true
+    title_languages:
+      selector: languages
+      optional: true
+      filters:
+        - name: replace
+          args: ["pt-BR", "brazilian"]
+        - name: replace
+          args: ["pt", "portuguese"]
+        - name: replace
+          args: ["en", "english"]
+    title:
+      text: "{{ or .Result.title_name (or .Result.title_dn .Result.title_xt) }}{{ if .Result.title_languages }} [{{ .Result.title_languages }}]{{ else }}{{ end }}"
+    details:
+      selector: provider_url
+    download:
+      selector: download_url
+      optional: true
+    magnet:
+      selector: magnet_uri
+    imdbid:
+      selector: imdb_id
+      optional: true
+    tmdbid:
+      selector: tmdb_id
+      optional: true
+    date:
+      selector: inserted_at
+    size:
+      selector: torrent_size
+      optional: true
+      default: 0
+    seeders:
+      selector: torrent_num_seeds
+      optional: true
+      default: 0
+    leechers:
+      selector: torrent_num_peers
+      optional: true
+      default: 0
+
+# json betor search api v1
