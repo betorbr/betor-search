@@ -14,12 +14,12 @@ type CatalogStatus interface {
 }
 
 type Component struct {
-	Name     string
-	Status   string
-	Updated  time.Time
-	LastRun  time.Time
-	Message  string
-	Catalog  CatalogStatus
+	Name    string
+	Status  string
+	Updated time.Time
+	LastRun time.Time
+	Message string
+	Catalog CatalogStatus
 }
 
 type Service struct {

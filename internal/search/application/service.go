@@ -16,7 +16,7 @@ import (
 )
 
 type Episode struct {
-	Number int `json:"number"`
+	Number int    `json:"number"`
 	Title  string `json:"title,omitempty"`
 }
 
@@ -31,8 +31,8 @@ type Item struct {
 	MagnetXT        string    `json:"magnet_xt"`
 	MagnetDN        string    `json:"magnet_dn,omitempty"`
 	TorrentName     string    `json:"torrent_name,omitempty"`
-	TorrentNumPeers int      `json:"torrent_num_peers,omitempty"`
-	TorrentNumSeeds int      `json:"torrent_num_seeds,omitempty"`
+	TorrentNumPeers int       `json:"torrent_num_peers,omitempty"`
+	TorrentNumSeeds int       `json:"torrent_num_seeds,omitempty"`
 	TorrentFiles    []string  `json:"torrent_files,omitempty"`
 	TorrentSize     int       `json:"torrent_size,omitempty"`
 	Languages       []string  `json:"languages,omitempty"`
@@ -45,26 +45,26 @@ type Item struct {
 
 func (i *Item) UnmarshalJSON(data []byte) error {
 	type itemAlias struct {
-		ID              string    `json:"id"`
-		ProviderSlug    string    `json:"provider_slug"`
-		ProviderURL     string    `json:"provider_url"`
-		IMDBID          string    `json:"imdb_id"`
-		TMDBID          string    `json:"tmdb_id"`
-		ItemType        string    `json:"item_type"`
-		MagnetURI       string    `json:"magnet_uri"`
-		MagnetXT        string    `json:"magnet_xt"`
-		MagnetDN        string    `json:"magnet_dn"`
-		TorrentName     string    `json:"torrent_name"`
-		TorrentNumPeers int       `json:"torrent_num_peers"`
-		TorrentNumSeeds int       `json:"torrent_num_seeds"`
-		TorrentFiles    []string  `json:"torrent_files"`
-		TorrentSize     int       `json:"torrent_size"`
-		Languages       []string  `json:"languages"`
-		Episodes        []Episode `json:"episodes"`
-		Seasons         []int     `json:"seasons"`
+		ID              string          `json:"id"`
+		ProviderSlug    string          `json:"provider_slug"`
+		ProviderURL     string          `json:"provider_url"`
+		IMDBID          string          `json:"imdb_id"`
+		TMDBID          string          `json:"tmdb_id"`
+		ItemType        string          `json:"item_type"`
+		MagnetURI       string          `json:"magnet_uri"`
+		MagnetXT        string          `json:"magnet_xt"`
+		MagnetDN        string          `json:"magnet_dn"`
+		TorrentName     string          `json:"torrent_name"`
+		TorrentNumPeers int             `json:"torrent_num_peers"`
+		TorrentNumSeeds int             `json:"torrent_num_seeds"`
+		TorrentFiles    []string        `json:"torrent_files"`
+		TorrentSize     int             `json:"torrent_size"`
+		Languages       []string        `json:"languages"`
+		Episodes        []Episode       `json:"episodes"`
+		Seasons         []int           `json:"seasons"`
 		InsertedAt      json.RawMessage `json:"inserted_at"`
 		UpdatedAt       json.RawMessage `json:"updated_at"`
-		DownloadURL     string    `json:"download_url"`
+		DownloadURL     string          `json:"download_url"`
 	}
 
 	var aux itemAlias

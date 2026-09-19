@@ -12,10 +12,10 @@ type fakeCatalog struct {
 	lastError     string
 }
 
-func (f fakeCatalog) Status() string { return f.status }
+func (f fakeCatalog) Status() string           { return f.status }
 func (f fakeCatalog) LastExecution() time.Time { return f.lastExecution }
-func (f fakeCatalog) LastSuccess() *time.Time { return f.lastSuccess }
-func (f fakeCatalog) LastError() string { return f.lastError }
+func (f fakeCatalog) LastSuccess() *time.Time  { return f.lastSuccess }
+func (f fakeCatalog) LastError() string        { return f.lastError }
 
 func TestService_ResponseReflectsCatalogComponentStatus(t *testing.T) {
 	lastSuccess := time.Date(2026, time.September, 19, 16, 0, 0, 0, time.UTC)
