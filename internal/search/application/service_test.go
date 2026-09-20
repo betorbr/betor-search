@@ -115,6 +115,14 @@ func TestDecodeItems_AllowsSingleItemObject(t *testing.T) {
 	}
 }
 
+func TestService_RespectsConfiguredMinuteInterval(t *testing.T) {
+	t.Setenv("BETOR_SEARCH_UPDATE_INTERVAL_MINUTES", "1")
+	service := NewService("https://example.com", 0)
+	if got, want := service.updateInterval, time.Minute; got != want {
+		t.Fatalf("updateInterval = %v, want %v", got, want)
+	}
+}
+
 func TestService_StartBackgroundSync_RefreshesOnInterval(t *testing.T) {
 	var calls int
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -125,11 +133,18 @@ func TestService_StartBackgroundSync_RefreshesOnInterval(t *testing.T) {
 	defer server.Close()
 
 	service := NewService(server.URL, 10*time.Millisecond)
+	if err := service.Sync(); err != nil {
+		t.Fatalf("initial Sync() returned error: %v", err)
+	}
+	if calls != 1 {
+		t.Fatalf("calls after initial sync = %d, want 1", calls)
+	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	go service.StartBackgroundSync(ctx)
 
-	deadline := time.Now().Add(500 * time.Millisecond)
+	deadline := time.Now().Add(200 * time.Millisecond)
 	for time.Now().Before(deadline) {
 		if calls >= 2 {
 			break
@@ -137,7 +152,7 @@ func TestService_StartBackgroundSync_RefreshesOnInterval(t *testing.T) {
 		time.Sleep(10 * time.Millisecond)
 	}
 	if calls < 2 {
-		t.Fatalf("expected at least 2 sync calls within 500ms, got %d", calls)
+		t.Fatalf("expected at least 2 sync calls within 200ms, got %d", calls)
 	}
 	if !service.HasHealthyData() {
 		t.Fatal("catalog was not populated after background syncs")
