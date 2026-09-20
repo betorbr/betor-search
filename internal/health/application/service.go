@@ -25,17 +25,18 @@ type Component struct {
 type Service struct {
 	componentName string
 	catalog       CatalogStatus
+	startedAt     time.Time
 }
 
 func NewService() Service {
-	return Service{componentName: "betor-search-catalog"}
+	return Service{componentName: "betor-search-catalog", startedAt: time.Now().UTC()}
 }
 
 func NewServiceWithCatalog(componentName string, catalog CatalogStatus) Service {
 	if componentName == "" {
 		componentName = "betor-search-catalog"
 	}
-	return Service{componentName: componentName, catalog: catalog}
+	return Service{componentName: componentName, catalog: catalog, startedAt: time.Now().UTC()}
 }
 
 func (s Service) Response(now time.Time) contract.Response {
@@ -74,6 +75,7 @@ func (s Service) Response(now time.Time) contract.Response {
 	return contract.Response{
 		Status:     status,
 		Components: components,
+		StartedAt:  s.startedAt.UTC(),
 		Timestamp:  now.UTC(),
 	}
 }

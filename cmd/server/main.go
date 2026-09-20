@@ -1,9 +1,14 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"strings"
+	"syscall"
 	"time"
 
 	"betor-search/internal/health/application"
@@ -13,19 +18,23 @@ import (
 )
 
 func main() {
-	catalogService := searchApplication.NewService("", 30*time.Minute)
-	searchInterval := 30 * time.Minute
-	if value := os.Getenv("BETOR_SEARCH_UPDATE_INTERVAL_MINUTES"); value != "" {
-		if parsedMinutes, err := time.ParseDuration(value + "m"); err == nil {
-			searchInterval = parsedMinutes
-		}
+	searchInterval := searchApplication.ParseUpdateIntervalFromEnv()
+	if value := strings.TrimSpace(os.Getenv("BETOR_SEARCH_UPDATE_INTERVAL_MINUTES")); value != "" {
+		log.Printf("loaded sync interval from env: BETOR_SEARCH_UPDATE_INTERVAL_MINUTES=%s parsed=%s", value, searchInterval)
 	}
-	catalogService = searchApplication.NewService("", searchInterval)
+	log.Printf("starting catalog sync loop with interval=%s", searchInterval)
+	catalogService := searchApplication.NewService("", searchInterval)
 	if err := catalogService.Sync(); err != nil {
 		log.Printf("initial catalog sync failed: %v", err)
+	} else {
+		log.Printf("initial catalog sync succeeded: last_success=%s status=%s", time.Now().UTC().Format(time.RFC3339Nano), catalogService.Status())
 	}
 
-	healthService := application.NewServiceWithCatalog("betor-search-catalog", catalogService)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	go catalogService.StartBackgroundSync(ctx)
+
+	healthService := application.NewServiceWithCatalog("betor-search-catalog", &catalogService)
 	mux := http.NewServeMux()
 	mux.Handle("/health", transport.NewHandler(healthService))
 	mux.Handle("/v1/search/", http.Handler(searchTransport.NewHandler(catalogService)))
@@ -36,7 +45,17 @@ func main() {
 	}
 
 	addr := ":" + port
-	if err := http.ListenAndServe(addr, mux); err != nil {
+	srv := &http.Server{Addr: addr, Handler: mux}
+	go func() {
+		<-ctx.Done()
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := srv.Shutdown(shutdownCtx); err != nil {
+			log.Printf("graceful shutdown failed: %v", err)
+		}
+	}()
+
+	if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		log.Fatal(err)
 	}
 }

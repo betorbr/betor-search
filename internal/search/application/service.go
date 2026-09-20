@@ -1,10 +1,12 @@
 package application
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -152,11 +154,26 @@ type Service struct {
 	lastError      string
 	baseURL        string
 	updateInterval time.Duration
+	startedAt      time.Time
+}
+
+func ParseUpdateIntervalFromEnv() time.Duration {
+	value := strings.TrimSpace(os.Getenv("BETOR_SEARCH_UPDATE_INTERVAL_MINUTES"))
+	if value == "" {
+		return 30 * time.Minute
+	}
+	if parsed, err := time.ParseDuration(value + "m"); err == nil {
+		return parsed
+	}
+	if minutes, err := strconv.Atoi(value); err == nil && minutes > 0 {
+		return time.Duration(minutes) * time.Minute
+	}
+	return 30 * time.Minute
 }
 
 func NewService(baseURL string, interval time.Duration) Service {
 	if interval <= 0 {
-		interval = 30 * time.Minute
+		interval = ParseUpdateIntervalFromEnv()
 	}
 	if baseURL == "" {
 		baseURL = resolveBaseURLFromEnv()
@@ -165,6 +182,7 @@ func NewService(baseURL string, interval time.Duration) Service {
 		status:         "DOWN",
 		baseURL:        normalizeBaseURL(baseURL),
 		updateInterval: interval,
+		startedAt:      time.Now().UTC(),
 	}
 }
 
@@ -278,6 +296,7 @@ func (s *Service) Sync() error {
 	}
 
 	now := time.Now().UTC()
+	log.Printf("catalog sync start: url=%s started_at=%s", url, now.Format(time.RFC3339Nano))
 	s.mu.Lock()
 	s.lastExecution = now
 	s.status = "DEGRADED"
@@ -290,11 +309,18 @@ func (s *Service) Sync() error {
 		s.status = "DOWN"
 		s.lastError = err.Error()
 		s.mu.Unlock()
+		log.Printf("catalog sync failed: url=%s err=%v", url, err)
 		return err
 	}
 
 	if len(items) == 0 {
-		return errors.New("empty catalog returned by BeTor")
+		err := errors.New("empty catalog returned by BeTor")
+		s.mu.Lock()
+		s.status = "DOWN"
+		s.lastError = err.Error()
+		s.mu.Unlock()
+		log.Printf("catalog sync failed: url=%s reason=%s", url, err.Error())
+		return err
 	}
 
 	s.mu.Lock()
@@ -304,6 +330,7 @@ func (s *Service) Sync() error {
 	nowSuccess := time.Now().UTC()
 	s.lastSuccess = &nowSuccess
 	s.mu.Unlock()
+	log.Printf("catalog sync successful: url=%s items=%d updated_at=%s", url, len(items), nowSuccess.Format(time.RFC3339Nano))
 	return nil
 }
 
@@ -338,6 +365,12 @@ func (s Service) LastError() string {
 	return s.lastError
 }
 
+func (s Service) StartedAt() time.Time {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.startedAt
+}
+
 func (s Service) Items() []Item {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -350,6 +383,29 @@ func (s Service) HasHealthyData() bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return len(s.items) > 0
+}
+
+func (s *Service) StartBackgroundSync(ctx context.Context) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	log.Printf("background sync loop started: interval=%s", s.updateInterval)
+
+	ticker := time.NewTicker(s.updateInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			log.Printf("background sync loop stopped: reason=%v", ctx.Err())
+			return
+		case <-ticker.C:
+			log.Printf("scheduled sync tick: at=%s interval=%s", time.Now().UTC().Format(time.RFC3339Nano), s.updateInterval)
+			if err := s.Sync(); err != nil {
+				log.Printf("scheduled catalog sync failed: %v", err)
+			}
+		}
+	}
 }
 
 func matchQuery(item Item, query string, filter SearchFilter) bool {

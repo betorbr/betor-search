@@ -13,5 +13,6 @@ type Component struct {
 type Response struct {
 	Status     string      `json:"status"`
 	Components []Component `json:"components"`
+	StartedAt  time.Time   `json:"started_at,omitempty"`
 	Timestamp  time.Time   `json:"timestamp"`
 }
