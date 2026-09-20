@@ -77,6 +77,7 @@ Resposta esperada para `GET` (status `200`):
       "message": "catalog sync successful"
     }
   ],
+  "started_at": "2026-09-19T11:59:00Z",
   "timestamp": "2026-09-19T12:00:00Z"
 }
 ```
