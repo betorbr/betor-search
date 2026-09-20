@@ -43,8 +43,6 @@ A aplicação lê as seguintes variáveis em tempo de inicialização:
 | `BETOR_SEARCH_UPDATE_INTERVAL_MINUTES` | Intervalo, em minutos, entre cada sincronização do catálogo em memória. | `30` |
 | `BETOR_SEARCH_DOWNLOAD_ITEMS_URL` | URL completa para sobrescrever o endpoint de dump de itens. Quando vazia, o serviço usa `BETOR_SEARCH_API_BASE_URL + /v1/admin/download-items/`. | opcional |
 
-Observação importante: a variável `BETOR_SEARCH_COMPONENT_NAME` não é lida pelo runtime atual. O nome do componente no health endpoint está hardcoded como `betor-search-catalog` em [cmd/server/main.go](cmd/server/main.go) e [internal/health/application/service.go](internal/health/application/service.go).
-
 Quando `BETOR_SEARCH_API_AUTHORIZATION_BASIC_VALUE` estiver preenchido, a aplicação envia o header `Authorization: Basic <valor>` na sincronização do catálogo. Quando vazio, o header é omitido.
 
 Exemplo de execução com variáveis customizadas:

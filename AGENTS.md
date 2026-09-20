@@ -30,7 +30,7 @@ Betor Search is a Go 1.26 HTTP service that exposes a BeTor-backed search API an
 ## Conventions that differ from defaults
 
 - Keep the HTTP port configurable via `PORT` with a default of `8080`; do not hard-code the port in handlers or service code.
-- Use env-driven overrides for sync behavior: `BETOR_SEARCH_API_BASE_URL`, `BETOR_SEARCH_API_AUTHORIZATION_BASIC_VALUE`, `BETOR_SEARCH_UPDATE_INTERVAL_MINUTES`, `BETOR_SEARCH_DOWNLOAD_ITEMS_URL`, and `BETOR_SEARCH_COMPONENT_NAME`.
+- Use env-driven overrides for sync behavior: `BETOR_SEARCH_API_BASE_URL`, `BETOR_SEARCH_API_AUTHORIZATION_BASIC_VALUE`, and `BETOR_SEARCH_UPDATE_INTERVAL_MINUTES`, plus optional `BETOR_SEARCH_DOWNLOAD_ITEMS_URL`.
 - Treat `BETOR_SEARCH_API_AUTHORIZATION_BASIC_VALUE` as a pre-encoded Basic auth payload; empty means omit the header.
 - Keep service catalog sync in memory and refresh on the configured interval; do not persist catalog state into the repo.
 
