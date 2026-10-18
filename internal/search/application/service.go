@@ -270,10 +270,21 @@ func (s Service) Search(query string, filter SearchFilter) (SearchResult, error)
 	}
 
 	sort.Slice(matches, func(i, j int) bool {
-		if matches[i].InsertedAt.Equal(matches[j].InsertedAt) {
+		leftUpdated := matches[i].UpdatedAt
+		rightUpdated := matches[j].UpdatedAt
+		if leftUpdated.IsZero() {
+			leftUpdated = matches[i].InsertedAt
+		}
+		if rightUpdated.IsZero() {
+			rightUpdated = matches[j].InsertedAt
+		}
+		if leftUpdated.Equal(rightUpdated) {
+			if matches[i].ID == matches[j].ID {
+				return matches[i].TorrentName > matches[j].TorrentName
+			}
 			return matches[i].ID > matches[j].ID
 		}
-		return matches[i].InsertedAt.After(matches[j].InsertedAt)
+		return leftUpdated.After(rightUpdated)
 	})
 
 	start := (filter.Page - 1) * filter.Size
@@ -301,12 +312,19 @@ func (s *Service) Sync() error {
 	s.lastExecution = now
 	s.status = "DEGRADED"
 	s.lastError = ""
+	if len(s.items) == 0 {
+		s.status = "DOWN"
+	}
 	s.mu.Unlock()
 
 	items, err := s.fetchItemsFromURL(url)
 	if err != nil {
 		s.mu.Lock()
-		s.status = "DOWN"
+		if len(s.items) > 0 {
+			s.status = "DEGRADED"
+		} else {
+			s.status = "DOWN"
+		}
 		s.lastError = err.Error()
 		s.mu.Unlock()
 		log.Printf("catalog sync failed: url=%s err=%v", url, err)
@@ -316,10 +334,28 @@ func (s *Service) Sync() error {
 	if len(items) == 0 {
 		err := errors.New("empty catalog returned by BeTor")
 		s.mu.Lock()
-		s.status = "DOWN"
+		if len(s.items) > 0 {
+			s.status = "DEGRADED"
+		} else {
+			s.status = "DOWN"
+		}
 		s.lastError = err.Error()
 		s.mu.Unlock()
 		log.Printf("catalog sync failed: url=%s reason=%s", url, err.Error())
+		return err
+	}
+
+	if !isCatalogPayloadFreshEnough(items, s.items) {
+		err := errors.New("catalog payload is stale or older than current in-memory snapshot")
+		s.mu.Lock()
+		if len(s.items) > 0 {
+			s.status = "DEGRADED"
+		} else {
+			s.status = "DOWN"
+		}
+		s.lastError = err.Error()
+		s.mu.Unlock()
+		log.Printf("catalog sync rejected stale payload: url=%s items=%d current_items=%d reason=%s", url, len(items), len(s.items), err.Error())
 		return err
 	}
 
@@ -332,6 +368,39 @@ func (s *Service) Sync() error {
 	s.mu.Unlock()
 	log.Printf("catalog sync successful: url=%s items=%d updated_at=%s", url, len(items), nowSuccess.Format(time.RFC3339Nano))
 	return nil
+}
+
+func isCatalogPayloadFreshEnough(newItems []Item, currentItems []Item) bool {
+	if len(currentItems) == 0 {
+		return true
+	}
+	if len(newItems) == 0 {
+		return false
+	}
+
+	latestCurrent := latestItemTimestamp(currentItems)
+	latestIncoming := latestItemTimestamp(newItems)
+	if latestIncoming.IsZero() {
+		return true
+	}
+	if latestCurrent.IsZero() {
+		return true
+	}
+	return !latestIncoming.Before(latestCurrent)
+}
+
+func latestItemTimestamp(items []Item) time.Time {
+	var latest time.Time
+	for _, item := range items {
+		timestamp := item.UpdatedAt
+		if timestamp.IsZero() {
+			timestamp = item.InsertedAt
+		}
+		if timestamp.After(latest) {
+			latest = timestamp
+		}
+	}
+	return latest
 }
 
 func (s Service) Status() string {

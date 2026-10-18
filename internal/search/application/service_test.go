@@ -123,6 +123,89 @@ func TestService_RespectsConfiguredMinuteInterval(t *testing.T) {
 	}
 }
 
+func TestService_Sync_PreservesPriorCatalogAndMarksDegradedOnEmptyResponse(t *testing.T) {
+	items := []Item{{
+		ID:           "existing-item",
+		ProviderSlug: "test",
+		ProviderURL:  "https://example.com/1",
+		ItemType:     "movie",
+		MagnetURI:    "magnet:?xt=urn:btih:1",
+		MagnetXT:     "urn:btih:1",
+		TorrentName:  "Movie A",
+		InsertedAt:   time.Now().UTC(),
+	}}
+	service := NewServiceWithItems(items, "https://example.com", time.Minute)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"items":[]}`))
+	}))
+	defer server.Close()
+
+	service.baseURL = server.URL
+	if err := service.Sync(); err == nil {
+		t.Fatal("Sync() expected error when upstream responds with an empty catalog")
+	}
+	if got, want := len(service.Items()), 1; got != want {
+		t.Fatalf("len(items) = %d, want %d", got, want)
+	}
+	if got, want := service.Status(), "DEGRADED"; got != want {
+		t.Fatalf("status = %q, want %q", got, want)
+	}
+}
+
+func TestService_Sync_IgnoresStaleCatalogPayload(t *testing.T) {
+	currentTime := time.Now().UTC()
+	service := NewServiceWithItems([]Item{{
+		ID:           "newer",
+		ProviderSlug: "test",
+		ProviderURL:  "https://example.com/newer",
+		ItemType:     "movie",
+		MagnetURI:    "magnet:?xt=urn:btih:newer",
+		MagnetXT:     "urn:btih:newer",
+		TorrentName:  "Newest Movie",
+		InsertedAt:   currentTime.Add(-1 * time.Hour),
+		UpdatedAt:    currentTime,
+	}}, "https://example.com", time.Minute)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"items":[{"id":"older","provider_slug":"test","provider_url":"https://example.com/older","item_type":"movie","magnet_uri":"magnet:?xt=urn:btih:older","magnet_xt":"urn:btih:older","torrent_name":"Older Movie","inserted_at":"2024-01-01T00:00:00Z","updated_at":"2024-01-01T00:00:00Z"}]}`))
+	}))
+	defer server.Close()
+
+	service.baseURL = server.URL
+	if err := service.Sync(); err == nil {
+		t.Fatal("Sync() expected stale payload to be rejected")
+	}
+	if got, want := len(service.Items()), 1; got != want {
+		t.Fatalf("len(items) = %d, want %d", got, want)
+	}
+	if got := service.Items()[0].ID; got != "newer" {
+		t.Fatalf("catalog id = %q, want newer", got)
+	}
+}
+
+func TestSearchService_SortsByUpdatedAtWhenPresent(t *testing.T) {
+	base := time.Date(2025, time.January, 1, 0, 0, 0, 0, time.UTC)
+	items := []Item{
+		{ID: "older-inserted", ItemType: "movie", TorrentName: "Older Inserted", ProviderSlug: "test", ProviderURL: "https://example.com/older-inserted", MagnetURI: "magnet:?xt=urn:btih:older-inserted", MagnetXT: "urn:btih:older-inserted", Languages: []string{"pt-BR"}, InsertedAt: base.Add(1 * time.Hour), UpdatedAt: base.Add(1 * time.Hour)},
+		{ID: "newer-updated", ItemType: "movie", TorrentName: "Newer Updated", ProviderSlug: "test", ProviderURL: "https://example.com/newer-updated", MagnetURI: "magnet:?xt=urn:btih:newer-updated", MagnetXT: "urn:btih:newer-updated", Languages: []string{"pt-BR"}, InsertedAt: base, UpdatedAt: base.Add(3 * time.Hour)},
+	}
+
+	service := Service{items: items}
+	results, err := service.Search("", SearchFilter{Page: 1, Size: 10})
+	if err != nil {
+		t.Fatalf("Search returned error: %v", err)
+	}
+	if len(results.Items) != 2 {
+		t.Fatalf("len(items) = %d, want 2", len(results.Items))
+	}
+	if got := results.Items[0].ID; got != "newer-updated" {
+		t.Fatalf("first result id = %q, want newer-updated", got)
+	}
+}
+
 func TestService_StartBackgroundSync_RefreshesOnInterval(t *testing.T) {
 	var calls int
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
