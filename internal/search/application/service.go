@@ -139,30 +139,30 @@ type SearchFilter struct {
 }
 
 type CatalogMetadata struct {
-	ItemsTotal int       `json:"items_total"`
+	ItemsTotal  int       `json:"items_total"`
 	GeneratedAt time.Time `json:"generated_at"`
 }
 
 type SearchResult struct {
-	Items   []Item            `json:"items"`
-	Total   int               `json:"total"`
-	Page    int               `json:"page"`
-	Size    int               `json:"size"`
-	Catalog CatalogMetadata   `json:"_catalog"`
+	Items   []Item          `json:"items"`
+	Total   int             `json:"total"`
+	Page    int             `json:"page"`
+	Size    int             `json:"size"`
+	Catalog CatalogMetadata `json:"_catalog"`
 }
 
 type Service struct {
-	mu                  sync.RWMutex
-	items               []Item
-	catalogItemsTotal   int
-	catalogGeneratedAt  time.Time
-	status              string
-	lastExecution       time.Time
-	lastSuccess         *time.Time
-	lastError           string
-	baseURL             string
-	updateInterval      time.Duration
-	startedAt           time.Time
+	mu                 sync.RWMutex
+	items              []Item
+	catalogItemsTotal  int
+	catalogGeneratedAt time.Time
+	status             string
+	lastExecution      time.Time
+	lastSuccess        *time.Time
+	lastError          string
+	baseURL            string
+	updateInterval     time.Duration
+	startedAt          time.Time
 }
 
 func ParseUpdateIntervalFromEnv() time.Duration {
@@ -500,7 +500,7 @@ func (s Service) CatalogMetadata() CatalogMetadata {
 		generatedAt = time.Now().UTC()
 	}
 	return CatalogMetadata{
-		ItemsTotal: itemsTotal,
+		ItemsTotal:  itemsTotal,
 		GeneratedAt: generatedAt,
 	}
 }

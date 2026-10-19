@@ -1,0 +1,282 @@
+2026-10-19T23:00:43.9899699Z Current runner version: '2.337.0'
+2026-10-19T23:00:43.9918691Z ##[group]Runner Image Provisioner
+2026-10-19T23:00:43.9919354Z Hosted Compute Agent
+2026-10-19T23:00:43.9919713Z Version: 20261015.610
+2026-10-19T23:00:43.9920087Z Commit: 267fdb4e8bbec4ab5ea31367f3a00d5c480c7656
+2026-10-19T23:00:43.9920573Z Build Date: 2026-10-14T17:06:54Z
+2026-10-19T23:00:43.9920987Z Worker ID: {10341598-e115-459b-b72d-ace1c06287d4}
+2026-10-19T23:00:43.9921713Z Region: westus2
+2026-10-19T23:00:43.9922053Z Cloud: Azure
+2026-10-19T23:00:43.9922372Z ##[endgroup]
+2026-10-19T23:00:43.9923298Z ##[group]Operating System
+2026-10-19T23:00:43.9923667Z Ubuntu
+2026-10-19T23:00:43.9924055Z 24.04.5
+2026-10-19T23:00:43.9924389Z LTS
+2026-10-19T23:00:43.9924706Z ##[endgroup]
+2026-10-19T23:00:43.9925082Z ##[group]Runner Image
+2026-10-19T23:00:43.9925459Z Image: ubuntu-24.04
+2026-10-19T23:00:43.9925894Z Version: 20261018.339.1
+2026-10-19T23:00:43.9926651Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261018.339/images/ubuntu/Ubuntu2404-Readme.md
+2026-10-19T23:00:43.9927554Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261018.339
+2026-10-19T23:00:43.9928114Z ##[endgroup]
+2026-10-19T23:00:43.9929230Z ##[group]GITHUB_TOKEN Permissions
+2026-10-19T23:00:43.9930635Z Contents: read
+2026-10-19T23:00:43.9931022Z Metadata: read
+2026-10-19T23:00:43.9931377Z ##[endgroup]
+2026-10-19T23:00:43.9932954Z Secret source: Actions
+2026-10-19T23:00:43.9933581Z Cache mode: write
+2026-10-19T23:00:43.9934160Z Prepare workflow directory
+2026-10-19T23:00:44.0142366Z Prepare all required actions
+2026-10-19T23:00:44.0173812Z Getting action download info
+2026-10-19T23:00:44.3308105Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-10-19T23:00:44.4138041Z Download action repository 'actions/setup-go@v5' (SHA:40f1582b2485089dde7abd97c1529aa768e1baff)
+2026-10-19T23:00:44.7296370Z Complete job name: Go test and build
+2026-10-19T23:00:44.7747399Z ##[group]Run actions/checkout@v4
+2026-10-19T23:00:44.7747823Z with:
+2026-10-19T23:00:44.7748066Z   repository: betorbr/betor-search
+2026-10-19T23:00:44.7749960Z   token: ***
+2026-10-19T23:00:44.7750185Z   ssh-strict: true
+2026-10-19T23:00:44.7750418Z   ssh-user: git
+2026-10-19T23:00:44.7750657Z   persist-credentials: true
+2026-10-19T23:00:44.7750912Z   clean: true
+2026-10-19T23:00:44.7751152Z   sparse-checkout-cone-mode: true
+2026-10-19T23:00:44.7751426Z   fetch-depth: 1
+2026-10-19T23:00:44.7751770Z   fetch-tags: false
+2026-10-19T23:00:44.7752009Z   show-progress: true
+2026-10-19T23:00:44.7752247Z   lfs: false
+2026-10-19T23:00:44.7752466Z   submodules: false
+2026-10-19T23:00:44.7752705Z   set-safe-directory: true
+2026-10-19T23:00:44.7752972Z   allow-unsafe-pr-checkout: false
+2026-10-19T23:00:44.7753322Z ##[endgroup]
+2026-10-19T23:00:44.8424906Z Syncing repository: betorbr/betor-search
+2026-10-19T23:00:44.8426453Z ##[group]Getting Git version info
+2026-10-19T23:00:44.8427141Z Working directory is '/home/runner/work/betor-search/betor-search'
+2026-10-19T23:00:44.8427791Z [command]/usr/bin/git version
+2026-10-19T23:00:44.8492443Z git version 2.55.0
+2026-10-19T23:00:44.8506538Z ##[endgroup]
+2026-10-19T23:00:44.8517426Z Temporarily overriding HOME='/home/runner/work/_temp/d2de42c2-3a83-4be7-b928-b691ac19c15f' before making global git config changes
+2026-10-19T23:00:44.8518628Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-19T23:00:44.8521135Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/betor-search/betor-search
+2026-10-19T23:00:44.8571464Z Deleting the contents of '/home/runner/work/betor-search/betor-search'
+2026-10-19T23:00:44.8574876Z ##[group]Initializing the repository
+2026-10-19T23:00:44.8578042Z [command]/usr/bin/git init /home/runner/work/betor-search/betor-search
+2026-10-19T23:00:44.8665071Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-10-19T23:00:44.8668165Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-10-19T23:00:44.8669252Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-10-19T23:00:44.8669842Z hint: call:
+2026-10-19T23:00:44.8670183Z hint:
+2026-10-19T23:00:44.8670624Z hint: 	git config --global init.defaultBranch <name>
+2026-10-19T23:00:44.8671143Z hint:
+2026-10-19T23:00:44.8671779Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-10-19T23:00:44.8672548Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-10-19T23:00:44.8673145Z hint:
+2026-10-19T23:00:44.8673478Z hint: 	git branch -m <name>
+2026-10-19T23:00:44.8673854Z hint:
+2026-10-19T23:00:44.8674365Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-10-19T23:00:44.8675277Z Initialized empty Git repository in /home/runner/work/betor-search/betor-search/.git/
+2026-10-19T23:00:44.8677050Z [command]/usr/bin/git remote add origin https://github.com/betorbr/betor-search
+2026-10-19T23:00:44.8720125Z ##[endgroup]
+2026-10-19T23:00:44.8720822Z ##[group]Disabling automatic garbage collection
+2026-10-19T23:00:44.8723286Z [command]/usr/bin/git config --local gc.auto 0
+2026-10-19T23:00:44.8750640Z ##[endgroup]
+2026-10-19T23:00:44.8751200Z ##[group]Setting up auth
+2026-10-19T23:00:44.8755853Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-19T23:00:44.8783855Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-19T23:00:44.9094948Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-19T23:00:44.9131372Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-19T23:00:44.9321695Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-19T23:00:44.9357607Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-19T23:00:44.9547297Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-10-19T23:00:44.9590182Z ##[endgroup]
+2026-10-19T23:00:44.9590823Z ##[group]Fetching the repository
+2026-10-19T23:00:44.9597041Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +be49ff7f54f7429c6f1b6ac7aab1cbc5a34729d4:refs/remotes/origin/main
+2026-10-19T23:00:45.3313353Z From https://github.com/betorbr/betor-search
+2026-10-19T23:00:45.3313966Z  * [new ref]         be49ff7f54f7429c6f1b6ac7aab1cbc5a34729d4 -> origin/main
+2026-10-19T23:00:45.3323520Z ##[endgroup]
+2026-10-19T23:00:45.3324312Z ##[group]Determining the checkout info
+2026-10-19T23:00:45.3325131Z ##[endgroup]
+2026-10-19T23:00:45.3325558Z [command]/usr/bin/git sparse-checkout disable
+2026-10-19T23:00:45.3375325Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-10-19T23:00:45.3408394Z ##[group]Checking out the ref
+2026-10-19T23:00:45.3411170Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2026-10-19T23:00:45.3617652Z Switched to a new branch 'main'
+2026-10-19T23:00:45.3620144Z branch 'main' set up to track 'origin/main'.
+2026-10-19T23:00:45.3627010Z ##[endgroup]
+2026-10-19T23:00:45.3672324Z [command]/usr/bin/git log -1 --format=%H
+2026-10-19T23:00:45.3701656Z be49ff7f54f7429c6f1b6ac7aab1cbc5a34729d4
+2026-10-19T23:00:45.3936735Z ##[group]Run actions/setup-go@v5
+2026-10-19T23:00:45.3937040Z with:
+2026-10-19T23:00:45.3937274Z   go-version-file: go.mod
+2026-10-19T23:00:45.3937529Z   cache: true
+2026-10-19T23:00:45.3937761Z   check-latest: false
+2026-10-19T23:00:45.3939651Z   token: ***
+2026-10-19T23:00:45.3939885Z ##[endgroup]
+2026-10-19T23:00:45.4803062Z Setup go version spec 1.26
+2026-10-19T23:00:45.4840397Z Found in cache @ /opt/hostedtoolcache/go/1.26.9/x64
+2026-10-19T23:00:45.4841695Z (node:2087) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-19T23:00:45.4842819Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-19T23:00:45.4844491Z Added go to the path
+2026-10-19T23:00:45.4846971Z Successfully set up Go version 1.26
+2026-10-19T23:00:45.5375621Z [command]/opt/hostedtoolcache/go/1.26.9/x64/bin/go env GOMODCACHE
+2026-10-19T23:00:45.5409417Z [command]/opt/hostedtoolcache/go/1.26.9/x64/bin/go env GOCACHE
+2026-10-19T23:00:45.5478394Z /home/runner/go/pkg/mod
+2026-10-19T23:00:45.5485724Z /home/runner/.cache/go-build
+2026-10-19T23:00:45.5515842Z ##[warning]Restore cache failed: Dependencies file is not found in /home/runner/work/betor-search/betor-search. Supported file pattern: go.sum
+2026-10-19T23:00:45.5538025Z go version go1.26.9 linux/amd64
+2026-10-19T23:00:45.5538309Z
+2026-10-19T23:00:45.5538719Z ##[group]go env
+2026-10-19T23:00:45.6790608Z AR='ar'
+2026-10-19T23:00:45.6791223Z CC='gcc'
+2026-10-19T23:00:45.6791777Z CGO_CFLAGS='-O2 -g'
+2026-10-19T23:00:45.6792053Z CGO_CPPFLAGS=''
+2026-10-19T23:00:45.6792294Z CGO_CXXFLAGS='-O2 -g'
+2026-10-19T23:00:45.6792571Z CGO_ENABLED='1'
+2026-10-19T23:00:45.6792810Z CGO_FFLAGS='-O2 -g'
+2026-10-19T23:00:45.6793073Z CGO_LDFLAGS='-O2 -g'
+2026-10-19T23:00:45.6793317Z CXX='g++'
+2026-10-19T23:00:45.6793550Z GCCGO='gccgo'
+2026-10-19T23:00:45.6793779Z GO111MODULE=''
+2026-10-19T23:00:45.6794028Z GOAMD64='v1'
+2026-10-19T23:00:45.6794257Z GOARCH='amd64'
+2026-10-19T23:00:45.6794547Z GOAUTH='netrc'
+2026-10-19T23:00:45.6794781Z GOBIN=''
+2026-10-19T23:00:45.6795029Z GOCACHE='/home/runner/.cache/go-build'
+2026-10-19T23:00:45.6795356Z GOCACHEPROG=''
+2026-10-19T23:00:45.6795606Z GODEBUG=''
+2026-10-19T23:00:45.6795894Z GOENV='/home/runner/.config/go/env'
+2026-10-19T23:00:45.6796196Z GOEXE=''
+2026-10-19T23:00:45.6796418Z GOEXPERIMENT=''
+2026-10-19T23:00:45.6796651Z GOFIPS140='off'
+2026-10-19T23:00:45.6796891Z GOFLAGS=''
+2026-10-19T23:00:45.6797561Z GOGCCFLAGS='-fPIC -m64 -pthread -Wl,--no-gc-sections -fmessage-length=0 -ffile-prefix-map=/tmp/go-build2749027583=/tmp/go-build -gno-record-gcc-switches'
+2026-10-19T23:00:45.6798262Z GOHOSTARCH='amd64'
+2026-10-19T23:00:45.6798525Z GOHOSTOS='linux'
+2026-10-19T23:00:45.6798777Z GOINSECURE=''
+2026-10-19T23:00:45.6799098Z GOMOD='/home/runner/work/betor-search/betor-search/go.mod'
+2026-10-19T23:00:45.6799507Z GOMODCACHE='/home/runner/go/pkg/mod'
+2026-10-19T23:00:45.6799826Z GONOPROXY=''
+2026-10-19T23:00:45.6800069Z GONOSUMDB=''
+2026-10-19T23:00:45.6800336Z GOOS='linux'
+2026-10-19T23:00:45.6800574Z GOPATH='/home/runner/go'
+2026-10-19T23:00:45.6800842Z GOPRIVATE=''
+2026-10-19T23:00:45.6801126Z GOPROXY='https://proxy.golang.org,direct'
+2026-10-19T23:00:45.6801484Z GOROOT='/opt/hostedtoolcache/go/1.26.9/x64'
+2026-10-19T23:00:45.6801963Z GOSUMDB='sum.golang.org'
+2026-10-19T23:00:45.6802224Z GOTELEMETRY='local'
+2026-10-19T23:00:45.6802507Z GOTELEMETRYDIR='/home/runner/.config/go/telemetry'
+2026-10-19T23:00:45.6802859Z GOTMPDIR=''
+2026-10-19T23:00:45.6803089Z GOTOOLCHAIN='auto'
+2026-10-19T23:00:45.6803423Z GOTOOLDIR='/opt/hostedtoolcache/go/1.26.9/x64/pkg/tool/linux_amd64'
+2026-10-19T23:00:45.6803799Z GOVCS=''
+2026-10-19T23:00:45.6804024Z GOVERSION='go1.26.9'
+2026-10-19T23:00:45.6804266Z GOWORK=''
+2026-10-19T23:00:45.6804502Z PKG_CONFIG='pkg-config'
+2026-10-19T23:00:45.6804665Z
+2026-10-19T23:00:45.6805297Z ##[endgroup]
+2026-10-19T23:00:45.6995063Z ##[group]Run find . -name '*.go' -print0 | xargs -0 gofmt -w
+2026-10-19T23:00:45.6995578Z [36;1mfind . -name '*.go' -print0 | xargs -0 gofmt -w[0m
+2026-10-19T23:00:45.6995936Z [36;1mgit diff --exit-code[0m
+2026-10-19T23:00:45.7132068Z shell: /usr/bin/bash -e {0}
+2026-10-19T23:00:45.7132409Z ##[endgroup]
+2026-10-19T23:00:46.0567116Z diff --git a/internal/health/contract/response.go b/internal/health/contract/response.go
+2026-10-19T23:00:46.0568274Z index 193dcea..f61ae7c 100644
+2026-10-19T23:00:46.0568962Z --- a/internal/health/contract/response.go
+2026-10-19T23:00:46.0570318Z +++ b/internal/health/contract/response.go
+2026-10-19T23:00:46.0570836Z @@ -3,13 +3,13 @@ package contract
+2026-10-19T23:00:46.0571305Z  import "time"
+2026-10-19T23:00:46.0571929Z
+2026-10-19T23:00:46.0572458Z  type Component struct {
+2026-10-19T23:00:46.0572910Z -	Name       string    `json:"name"`
+2026-10-19T23:00:46.0573413Z -	Status     string    `json:"status"`
+2026-10-19T23:00:46.0573953Z -	Updated    time.Time `json:"updated_at"`
+2026-10-19T23:00:46.0574490Z -	LastRun    time.Time `json:"last_run_at"`
+2026-10-19T23:00:46.0575060Z -	ItemsTotal int       `json:"items_total,omitempty"`
+2026-10-19T23:00:46.0575647Z +	Name        string    `json:"name"`
+2026-10-19T23:00:46.0576196Z +	Status      string    `json:"status"`
+2026-10-19T23:00:46.0576734Z +	Updated     time.Time `json:"updated_at"`
+2026-10-19T23:00:46.0577259Z +	LastRun     time.Time `json:"last_run_at"`
+2026-10-19T23:00:46.0577815Z +	ItemsTotal  int       `json:"items_total,omitempty"`
+2026-10-19T23:00:46.0578431Z  	GeneratedAt time.Time `json:"generated_at,omitempty"`
+2026-10-19T23:00:46.0578996Z -	Message    string    `json:"message,omitempty"`
+2026-10-19T23:00:46.0579692Z +	Message     string    `json:"message,omitempty"`
+2026-10-19T23:00:46.0580390Z  }
+2026-10-19T23:00:46.0580974Z
+2026-10-19T23:00:46.0581714Z  type Response struct {
+2026-10-19T23:00:46.0582550Z diff --git a/internal/search/application/service.go b/internal/search/application/service.go
+2026-10-19T23:00:46.0583416Z index 0380958..ca25496 100644
+2026-10-19T23:00:46.0584099Z --- a/internal/search/application/service.go
+2026-10-19T23:00:46.0584854Z +++ b/internal/search/application/service.go
+2026-10-19T23:00:46.0585566Z @@ -139,30 +139,30 @@ type SearchFilter struct {
+2026-10-19T23:00:46.0586307Z  }
+2026-10-19T23:00:46.0586979Z
+2026-10-19T23:00:46.0587570Z  type CatalogMetadata struct {
+2026-10-19T23:00:46.0588244Z -	ItemsTotal int       `json:"items_total"`
+2026-10-19T23:00:46.0588948Z +	ItemsTotal  int       `json:"items_total"`
+2026-10-19T23:00:46.0589686Z  	GeneratedAt time.Time `json:"generated_at"`
+2026-10-19T23:00:46.0590375Z  }
+2026-10-19T23:00:46.0590936Z
+2026-10-19T23:00:46.0591644Z  type SearchResult struct {
+2026-10-19T23:00:46.0592306Z -	Items   []Item            `json:"items"`
+2026-10-19T23:00:46.0592994Z -	Total   int               `json:"total"`
+2026-10-19T23:00:46.0593689Z -	Page    int               `json:"page"`
+2026-10-19T23:00:46.0594421Z -	Size    int               `json:"size"`
+2026-10-19T23:00:46.0595077Z -	Catalog CatalogMetadata   `json:"_catalog"`
+2026-10-19T23:00:46.0595730Z +	Items   []Item          `json:"items"`
+2026-10-19T23:00:46.0596345Z +	Total   int             `json:"total"`
+2026-10-19T23:00:46.0596953Z +	Page    int             `json:"page"`
+2026-10-19T23:00:46.0597556Z +	Size    int             `json:"size"`
+2026-10-19T23:00:46.0598158Z +	Catalog CatalogMetadata `json:"_catalog"`
+2026-10-19T23:00:46.0598742Z  }
+2026-10-19T23:00:46.0599220Z
+2026-10-19T23:00:46.0599700Z  type Service struct {
+2026-10-19T23:00:46.0600241Z -	mu                  sync.RWMutex
+2026-10-19T23:00:46.0600795Z -	items               []Item
+2026-10-19T23:00:46.0601342Z -	catalogItemsTotal   int
+2026-10-19T23:00:46.0601995Z -	catalogGeneratedAt  time.Time
+2026-10-19T23:00:46.0602555Z -	status              string
+2026-10-19T23:00:46.0603102Z -	lastExecution       time.Time
+2026-10-19T23:00:46.0603662Z -	lastSuccess         *time.Time
+2026-10-19T23:00:46.0604408Z -	lastError           string
+2026-10-19T23:00:46.0604951Z -	baseURL             string
+2026-10-19T23:00:46.0605507Z -	updateInterval      time.Duration
+2026-10-19T23:00:46.0606079Z -	startedAt           time.Time
+2026-10-19T23:00:46.0606631Z +	mu                 sync.RWMutex
+2026-10-19T23:00:46.0607186Z +	items              []Item
+2026-10-19T23:00:46.0607729Z +	catalogItemsTotal  int
+2026-10-19T23:00:46.0608279Z +	catalogGeneratedAt time.Time
+2026-10-19T23:00:46.0608826Z +	status             string
+2026-10-19T23:00:46.0609366Z +	lastExecution      time.Time
+2026-10-19T23:00:46.0610009Z +	lastSuccess        *time.Time
+2026-10-19T23:00:46.0610573Z +	lastError          string
+2026-10-19T23:00:46.0611107Z +	baseURL            string
+2026-10-19T23:00:46.0611797Z +	updateInterval     time.Duration
+2026-10-19T23:00:46.0612372Z +	startedAt          time.Time
+2026-10-19T23:00:46.0612901Z  }
+2026-10-19T23:00:46.0613356Z
+2026-10-19T23:00:46.0613892Z  func ParseUpdateIntervalFromEnv() time.Duration {
+2026-10-19T23:00:46.0614638Z @@ -500,7 +500,7 @@ func (s Service) CatalogMetadata() CatalogMetadata {
+2026-10-19T23:00:46.0615361Z  		generatedAt = time.Now().UTC()
+2026-10-19T23:00:46.0615909Z  	}
+2026-10-19T23:00:46.0616407Z  	return CatalogMetadata{
+2026-10-19T23:00:46.0616960Z -		ItemsTotal: itemsTotal,
+2026-10-19T23:00:46.0617506Z +		ItemsTotal:  itemsTotal,
+2026-10-19T23:00:46.0618063Z  		GeneratedAt: generatedAt,
+2026-10-19T23:00:46.0618596Z  	}
+2026-10-19T23:00:46.0619034Z  }
+2026-10-19T23:00:46.0625617Z ##[error]Process completed with exit code 1.
+2026-10-19T23:00:46.0755872Z Post job cleanup.
+2026-10-19T23:00:46.1343581Z [command]/usr/bin/git version
+2026-10-19T23:00:46.1379282Z git version 2.55.0
+2026-10-19T23:00:46.1404862Z Temporarily overriding HOME='/home/runner/work/_temp/70802abc-8447-4430-b334-5e749bd869f5' before making global git config changes
+2026-10-19T23:00:46.1406537Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-19T23:00:46.1408071Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/betor-search/betor-search
+2026-10-19T23:00:46.1445344Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-19T23:00:46.1476218Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-19T23:00:46.1682271Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-19T23:00:46.1712709Z http.https://github.com/.extraheader
+2026-10-19T23:00:46.1723141Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-10-19T23:00:46.1759941Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-19T23:00:46.1976565Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-19T23:00:46.2014225Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-19T23:00:46.2352093Z Cleaning up orphan processes
+2026-10-19T23:00:46.2601303Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-go@v5. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
