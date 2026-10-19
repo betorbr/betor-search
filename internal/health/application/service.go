@@ -56,6 +56,15 @@ func (s Service) Response(now time.Time) contract.Response {
 			LastRun: s.catalog.LastExecution().UTC(),
 			Message: s.catalog.LastError(),
 		}
+		if snapshot, ok := s.catalog.(interface {
+			ItemsTotal() int
+			GeneratedAt() time.Time
+		}); ok {
+			component.ItemsTotal = snapshot.ItemsTotal()
+			if generatedAt := snapshot.GeneratedAt(); !generatedAt.IsZero() {
+				component.GeneratedAt = generatedAt.UTC()
+			}
+		}
 		if s.catalog.LastSuccess() != nil {
 			component.Updated = s.catalog.LastSuccess().UTC()
 		}

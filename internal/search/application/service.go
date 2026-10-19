@@ -138,23 +138,31 @@ type SearchFilter struct {
 	Size     int
 }
 
+type CatalogMetadata struct {
+	ItemsTotal int       `json:"items_total"`
+	GeneratedAt time.Time `json:"generated_at"`
+}
+
 type SearchResult struct {
-	Items []Item `json:"items"`
-	Total int    `json:"total"`
-	Page  int    `json:"page"`
-	Size  int    `json:"size"`
+	Items   []Item            `json:"items"`
+	Total   int               `json:"total"`
+	Page    int               `json:"page"`
+	Size    int               `json:"size"`
+	Catalog CatalogMetadata   `json:"_catalog"`
 }
 
 type Service struct {
-	mu             sync.RWMutex
-	items          []Item
-	status         string
-	lastExecution  time.Time
-	lastSuccess    *time.Time
-	lastError      string
-	baseURL        string
-	updateInterval time.Duration
-	startedAt      time.Time
+	mu                  sync.RWMutex
+	items               []Item
+	catalogItemsTotal   int
+	catalogGeneratedAt  time.Time
+	status              string
+	lastExecution       time.Time
+	lastSuccess         *time.Time
+	lastError           string
+	baseURL             string
+	updateInterval      time.Duration
+	startedAt           time.Time
 }
 
 func ParseUpdateIntervalFromEnv() time.Duration {
@@ -244,9 +252,11 @@ func basicAuthHeaderValue() (string, bool) {
 func NewServiceWithItems(items []Item, baseURL string, interval time.Duration) Service {
 	service := NewService(baseURL, interval)
 	service.items = append([]Item(nil), items...)
+	service.catalogItemsTotal = len(items)
 	if len(items) > 0 {
 		service.status = "UP"
 		now := time.Now().UTC()
+		service.catalogGeneratedAt = now
 		service.lastSuccess = &now
 		service.lastExecution = now
 	}
@@ -289,7 +299,9 @@ func (s Service) Search(query string, filter SearchFilter) (SearchResult, error)
 
 	start := (filter.Page - 1) * filter.Size
 	if start >= len(matches) {
-		return SearchResult{Items: []Item{}, Total: len(matches), Page: filter.Page, Size: filter.Size}, nil
+		result := SearchResult{Items: []Item{}, Total: len(matches), Page: filter.Page, Size: filter.Size, Catalog: s.CatalogMetadata()}
+		debugLogf("search result page=%d size=%d total=%d catalog_items_total=%d catalog_generated_at=%s", filter.Page, filter.Size, len(matches), result.Catalog.ItemsTotal, result.Catalog.GeneratedAt.Format(time.RFC3339Nano))
+		return result, nil
 	}
 
 	end := start + filter.Size
@@ -297,7 +309,9 @@ func (s Service) Search(query string, filter SearchFilter) (SearchResult, error)
 		end = len(matches)
 	}
 
-	return SearchResult{Items: matches[start:end], Total: len(matches), Page: filter.Page, Size: filter.Size}, nil
+	result := SearchResult{Items: matches[start:end], Total: len(matches), Page: filter.Page, Size: filter.Size, Catalog: s.CatalogMetadata()}
+	debugLogf("search result page=%d size=%d total=%d catalog_items_total=%d catalog_generated_at=%s", filter.Page, filter.Size, len(matches), result.Catalog.ItemsTotal, result.Catalog.GeneratedAt.Format(time.RFC3339Nano))
+	return result, nil
 }
 
 func (s *Service) Sync() error {
@@ -308,6 +322,7 @@ func (s *Service) Sync() error {
 
 	now := time.Now().UTC()
 	log.Printf("catalog sync start: url=%s started_at=%s", url, now.Format(time.RFC3339Nano))
+	debugLogf("catalog sync begin: url=%s current_items=%d current_generated_at=%s", url, len(s.items), s.catalogGeneratedAt.UTC().Format(time.RFC3339Nano))
 	s.mu.Lock()
 	s.lastExecution = now
 	s.status = "DEGRADED"
@@ -317,7 +332,7 @@ func (s *Service) Sync() error {
 	}
 	s.mu.Unlock()
 
-	items, err := s.fetchItemsFromURL(url)
+	items, snapshot, err := s.fetchItemsFromURL(url)
 	if err != nil {
 		s.mu.Lock()
 		if len(s.items) > 0 {
@@ -327,6 +342,7 @@ func (s *Service) Sync() error {
 		}
 		s.lastError = err.Error()
 		s.mu.Unlock()
+		debugLogf("catalog sync failed: url=%s reason=%v current_snapshot_items_total=%d current_snapshot_generated_at=%s", url, err, s.catalogItemsTotal, s.catalogGeneratedAt.UTC().Format(time.RFC3339Nano))
 		log.Printf("catalog sync failed: url=%s err=%v", url, err)
 		return err
 	}
@@ -341,6 +357,7 @@ func (s *Service) Sync() error {
 		}
 		s.lastError = err.Error()
 		s.mu.Unlock()
+		debugLogf("catalog sync rejected empty payload: url=%s current_snapshot_items_total=%d current_snapshot_generated_at=%s", url, s.catalogItemsTotal, s.catalogGeneratedAt.UTC().Format(time.RFC3339Nano))
 		log.Printf("catalog sync failed: url=%s reason=%s", url, err.Error())
 		return err
 	}
@@ -355,17 +372,25 @@ func (s *Service) Sync() error {
 		}
 		s.lastError = err.Error()
 		s.mu.Unlock()
+		debugLogf("catalog sync rejected stale payload: url=%s incoming_items=%d incoming_latest=%s current_items=%d current_latest=%s reason=%s", url, len(items), latestItemTimestamp(items).UTC().Format(time.RFC3339Nano), len(s.items), latestItemTimestamp(s.items).UTC().Format(time.RFC3339Nano), err.Error())
 		log.Printf("catalog sync rejected stale payload: url=%s items=%d current_items=%d reason=%s", url, len(items), len(s.items), err.Error())
 		return err
 	}
 
 	s.mu.Lock()
 	s.items = items
+	s.catalogItemsTotal = snapshot.ItemsTotal
+	if !snapshot.GeneratedAt.IsZero() {
+		s.catalogGeneratedAt = snapshot.GeneratedAt
+	} else {
+		s.catalogGeneratedAt = now
+	}
 	s.status = "UP"
 	s.lastError = ""
 	nowSuccess := time.Now().UTC()
 	s.lastSuccess = &nowSuccess
 	s.mu.Unlock()
+	debugLogf("catalog sync accepted: url=%s items=%d items_total=%d generated_at=%s", url, len(items), s.catalogItemsTotal, s.catalogGeneratedAt.UTC().Format(time.RFC3339Nano))
 	log.Printf("catalog sync successful: url=%s items=%d updated_at=%s", url, len(items), nowSuccess.Format(time.RFC3339Nano))
 	return nil
 }
@@ -446,6 +471,38 @@ func (s Service) Items() []Item {
 	items := make([]Item, len(s.items))
 	copy(items, s.items)
 	return items
+}
+
+func (s Service) ItemsTotal() int {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	if s.catalogItemsTotal > 0 {
+		return s.catalogItemsTotal
+	}
+	return len(s.items)
+}
+
+func (s Service) GeneratedAt() time.Time {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.catalogGeneratedAt.UTC()
+}
+
+func (s Service) CatalogMetadata() CatalogMetadata {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	itemsTotal := s.catalogItemsTotal
+	if itemsTotal == 0 {
+		itemsTotal = len(s.items)
+	}
+	generatedAt := s.catalogGeneratedAt
+	if generatedAt.IsZero() {
+		generatedAt = time.Now().UTC()
+	}
+	return CatalogMetadata{
+		ItemsTotal: itemsTotal,
+		GeneratedAt: generatedAt,
+	}
 }
 
 func (s Service) HasHealthyData() bool {
@@ -623,11 +680,11 @@ func normalizeItems(raw any) ([]Item, error) {
 	return nil, errors.New("cannot decode payload into item list")
 }
 
-func (s *Service) fetchItemsFromURL(requestURL string) ([]Item, error) {
+func (s *Service) fetchItemsFromURL(requestURL string) ([]Item, CatalogMetadata, error) {
 	client := &http.Client{Timeout: 30 * time.Second}
 	req, err := http.NewRequest(http.MethodGet, requestURL, nil)
 	if err != nil {
-		return nil, err
+		return nil, CatalogMetadata{}, err
 	}
 
 	if value, ok := basicAuthHeaderValue(); ok {
@@ -636,52 +693,97 @@ func (s *Service) fetchItemsFromURL(requestURL string) ([]Item, error) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, CatalogMetadata{}, err
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return nil, CatalogMetadata{}, err
 	}
 
 	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
-		return nil, fmt.Errorf("metadata request to %s failed with status %d: %s", requestURL, resp.StatusCode, summarizeResponseBody(body))
+		return nil, CatalogMetadata{}, fmt.Errorf("metadata request to %s failed with status %d: %s", requestURL, resp.StatusCode, summarizeResponseBody(body))
+	}
+
+	metadata, err := decodeCatalogMetadata(body)
+	if err != nil {
+		metadata = CatalogMetadata{}
 	}
 
 	items, err := decodeItems(body)
 	if err == nil && len(items) > 0 {
-		return items, nil
+		if metadata.ItemsTotal == 0 {
+			metadata.ItemsTotal = len(items)
+		}
+		if metadata.GeneratedAt.IsZero() {
+			metadata.GeneratedAt = time.Now().UTC()
+		}
+		return items, metadata, nil
 	}
 
-	var metadata struct {
+	var metadataEnvelope struct {
 		DownloadURL string `json:"download_url"`
 	}
-	if err := json.Unmarshal(body, &metadata); err == nil && metadata.DownloadURL != "" {
-		downloadReq, buildErr := http.NewRequest(http.MethodGet, metadata.DownloadURL, nil)
+	if err := json.Unmarshal(body, &metadataEnvelope); err == nil && metadataEnvelope.DownloadURL != "" {
+		downloadReq, buildErr := http.NewRequest(http.MethodGet, metadataEnvelope.DownloadURL, nil)
 		if buildErr != nil {
-			return nil, buildErr
+			return nil, CatalogMetadata{}, buildErr
 		}
 		downloadResp, downloadErr := client.Do(downloadReq)
 		if downloadErr != nil {
-			return nil, downloadErr
+			return nil, CatalogMetadata{}, downloadErr
 		}
 		defer downloadResp.Body.Close()
 		downloadBody, readErr := io.ReadAll(downloadResp.Body)
 		if readErr != nil {
-			return nil, readErr
+			return nil, CatalogMetadata{}, readErr
 		}
 		if downloadResp.StatusCode < http.StatusOK || downloadResp.StatusCode >= http.StatusMultipleChoices {
-			return nil, fmt.Errorf("download_url %s failed with status %d: %s", metadata.DownloadURL, downloadResp.StatusCode, summarizeResponseBody(downloadBody))
+			return nil, CatalogMetadata{}, fmt.Errorf("download_url %s failed with status %d: %s", metadataEnvelope.DownloadURL, downloadResp.StatusCode, summarizeResponseBody(downloadBody))
 		}
 		items, err = decodeItems(downloadBody)
 		if err == nil && len(items) > 0 {
-			return items, nil
+			if metadata.ItemsTotal == 0 {
+				metadata.ItemsTotal = len(items)
+			}
+			if metadata.GeneratedAt.IsZero() {
+				metadata.GeneratedAt = time.Now().UTC()
+			}
+			return items, metadata, nil
 		}
-		return nil, fmt.Errorf("download_url %s responded with status %d but no usable item list was found: %s", metadata.DownloadURL, downloadResp.StatusCode, summarizeResponseBody(downloadBody))
+		return nil, CatalogMetadata{}, fmt.Errorf("download_url %s responded with status %d but no usable item list was found: %s", metadataEnvelope.DownloadURL, downloadResp.StatusCode, summarizeResponseBody(downloadBody))
 	}
 
-	return nil, fmt.Errorf("metadata request to %s succeeded but did not contain an item list or download_url: %s", requestURL, summarizeResponseBody(body))
+	return nil, CatalogMetadata{}, fmt.Errorf("metadata request to %s succeeded but did not contain an item list or download_url: %s", requestURL, summarizeResponseBody(body))
+}
+
+func decodeCatalogMetadata(body []byte) (CatalogMetadata, error) {
+	trimmed := strings.TrimSpace(string(body))
+	if trimmed == "" {
+		return CatalogMetadata{}, errors.New("empty payload")
+	}
+
+	var metadata struct {
+		ItemsTotal  int             `json:"items_total"`
+		GeneratedAt json.RawMessage `json:"generated_at"`
+	}
+	if err := json.Unmarshal(body, &metadata); err != nil {
+		return CatalogMetadata{}, err
+	}
+
+	result := CatalogMetadata{ItemsTotal: metadata.ItemsTotal}
+	if len(metadata.GeneratedAt) > 0 && string(metadata.GeneratedAt) != "null" {
+		parsed, err := parseFlexibleTimeString(strings.Trim(string(metadata.GeneratedAt), "\""))
+		if err != nil {
+			return CatalogMetadata{}, err
+		}
+		result.GeneratedAt = parsed
+	}
+	if result.ItemsTotal == 0 && result.GeneratedAt.IsZero() {
+		return CatalogMetadata{}, errors.New("no catalog metadata found")
+	}
+	return result, nil
 }
 
 func summarizeResponseBody(body []byte) string {
@@ -693,6 +795,15 @@ func summarizeResponseBody(body []byte) string {
 		trimmed = trimmed[:220] + "..."
 	}
 	return trimmed
+}
+
+func debugLogf(format string, args ...any) {
+	if !strings.EqualFold(strings.TrimSpace(os.Getenv("BETOR_SEARCH_DEBUG")), "true") &&
+		!strings.EqualFold(strings.TrimSpace(os.Getenv("BETOR_SEARCH_DEBUG")), "1") &&
+		!strings.EqualFold(strings.TrimSpace(os.Getenv("BETOR_SEARCH_DEBUG")), "debug") {
+		return
+	}
+	log.Printf("[DEBUG] "+format, args...)
 }
 
 func (s Service) ParseHTTPQuery(query string) SearchFilter {
