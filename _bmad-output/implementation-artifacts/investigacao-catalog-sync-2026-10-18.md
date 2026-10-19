@@ -123,6 +123,57 @@ Em outras palavras, um problema transitório na fonte pode causar perda real de 
 - `internal/search/application/service.go`
 - `internal/search/application/service_test.go`
 
+## Baseline de observação no ambiente real (2026-10-19 16:35 UTC)
+
+### Endpoint /health
+
+Resposta observada em `https://search.betor.top/health`:
+
+```json
+{
+  "status": "UP",
+  "components": [
+    {
+      "name": "betor-search-catalog",
+      "status": "UP",
+      "updated_at": "2026-10-19T16:32:09.041075668Z",
+      "last_run_at": "2026-10-19T16:32:04.35606949Z",
+      "message": "catalog sync successful"
+    }
+  ],
+  "started_at": "2026-10-18T18:32:04.354485356Z",
+  "timestamp": "2026-10-19T16:35:24.674872679Z"
+}
+```
+
+Observação: nesta instância em produção ainda não há `items_total` nem `generated_at` no componente de health. O payload de health continua sem metadata do catálogo.
+
+### Endpoint /v1/search/?page=1&size=10
+
+Resposta observada em `https://search.betor.top/v1/search/?page=1&size=10`:
+
+- `total`: `32632`
+- `page`: `1`
+- `size`: `10`
+- item mais recente exibido na página: `inserted_at = 2026-10-18T17:36:57.914Z`
+- mesmo item: `updated_at = 2026-10-18T18:09:30.206Z`
+
+A resposta ainda não expõe o objeto raiz `_catalog`, então não há metadata de catalogo no payload de busca no ambiente real atual.
+
+### Interpretação inicial
+
+A instância está saudável do ponto de vista de health (`UP`), mas o payload de busca ainda não está emitindo a metadata do snapshot do catálogo. O efeito observado também é consistente com o problema de semântica entre `inserted_at` e `updated_at`: um item pode ter `inserted_at` antigo enquanto `updated_at` indica refresh recente.
+
+### Próxima checagem planejada
+
+Repetir exatamente estas mesmas consultas em alguns horários (ex.: +2h, +6h, +12h) para comparar:
+
+1. `updated_at` do health;
+2. `generated_at` do snapshot de catálogo (quando disponível);
+3. `items_total` do snapshot de catálogo;
+4. o último `updated_at` e `inserted_at` do payload de busca;
+5. presença/ausência do campo raíz `_catalog`.
+
 ## Status
 
-Artefato de investigação inicial concluído. A próxima etapa será implementar a correção defensiva com testes cobrindo a regressão de catálogo zerado/desatualizado.
+Observação de baseline registrada. A próxima etapa é repetir as mesmas consultas em um intervalo posterior e comparar o delta do catálogo em saúde e busca.

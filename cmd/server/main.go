@@ -37,7 +37,7 @@ func main() {
 	healthService := application.NewServiceWithCatalog("betor-search-catalog", &catalogService)
 	mux := http.NewServeMux()
 	mux.Handle("/health", transport.NewHandler(healthService))
-	mux.Handle("/v1/search/", http.Handler(searchTransport.NewHandler(catalogService)))
+	mux.Handle("/v1/search/", http.Handler(searchTransport.NewHandler(&catalogService)))
 
 	port := os.Getenv("PORT")
 	if port == "" {
