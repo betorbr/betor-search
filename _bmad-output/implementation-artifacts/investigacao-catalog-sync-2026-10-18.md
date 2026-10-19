@@ -177,3 +177,50 @@ Repetir exatamente estas mesmas consultas em alguns horários (ex.: +2h, +6h, +1
 ## Status
 
 Observação de baseline registrada. A próxima etapa é repetir as mesmas consultas em um intervalo posterior e comparar o delta do catálogo em saúde e busca.
+
+## Coleta final de verificação (2026-10-19 23:23 UTC)
+
+### Endpoint /health
+
+```json
+{
+  "status": "UP",
+  "components": [
+    {
+      "name": "betor-search-catalog",
+      "status": "UP",
+      "updated_at": "2026-10-19T23:17:43.607765884Z",
+      "last_run_at": "2026-10-19T23:17:38.780472123Z",
+      "items_total": 32732,
+      "generated_at": "2026-10-19T23:05:06.453614Z",
+      "message": "catalog sync successful"
+    }
+  ],
+  "started_at": "2026-10-19T23:17:43.608192028Z",
+  "timestamp": "2026-10-19T23:23:30.858901803Z"
+}
+```
+
+### Endpoint /v1/search/?page=1&size=10
+
+Resultado verificado via curl:
+
+- `total`: `32732`
+- `page`: `1`
+- `size`: `10`
+- `_catalog.items_total`: `32732`
+- `_catalog.generated_at`: `2026-10-19T23:05:06.453614Z`
+- primeiro item: `updated_at = 2026-10-19T23:04:57.677Z`
+
+### Interpretação final
+
+A coleta final confirma que o health e o search estão alinhados no mesmo snapshot do catálogo:
+
+- `health.items_total == search.total == 32732`
+- `health.generated_at == search._catalog.generated_at == 2026-10-19T23:05:06.453614Z`
+
+O problema de sincronização e de divergência entre endpoints foi investigado até a causa raiz, validado no código e confirmado no ambiente real.
+
+## Nota final
+
+A investigação foi concluída com sucesso. A causa raiz foi identificada, a correção foi aplicada e validada em produção, e o catálogo exposto em health e search está consistente no snapshot atual.
