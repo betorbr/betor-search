@@ -280,21 +280,21 @@ func (s Service) Search(query string, filter SearchFilter) (SearchResult, error)
 	}
 
 	sort.Slice(matches, func(i, j int) bool {
-		leftUpdated := matches[i].UpdatedAt
-		rightUpdated := matches[j].UpdatedAt
-		if leftUpdated.IsZero() {
-			leftUpdated = matches[i].InsertedAt
+		leftTimestamp := matches[i].InsertedAt
+		rightTimestamp := matches[j].InsertedAt
+		if leftTimestamp.IsZero() {
+			leftTimestamp = matches[i].UpdatedAt
 		}
-		if rightUpdated.IsZero() {
-			rightUpdated = matches[j].InsertedAt
+		if rightTimestamp.IsZero() {
+			rightTimestamp = matches[j].UpdatedAt
 		}
-		if leftUpdated.Equal(rightUpdated) {
+		if leftTimestamp.Equal(rightTimestamp) {
 			if matches[i].ID == matches[j].ID {
 				return matches[i].TorrentName > matches[j].TorrentName
 			}
 			return matches[i].ID > matches[j].ID
 		}
-		return leftUpdated.After(rightUpdated)
+		return leftTimestamp.After(rightTimestamp)
 	})
 
 	start := (filter.Page - 1) * filter.Size

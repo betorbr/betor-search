@@ -186,11 +186,11 @@ func TestService_Sync_IgnoresStaleCatalogPayload(t *testing.T) {
 	}
 }
 
-func TestSearchService_SortsByUpdatedAtWhenPresent(t *testing.T) {
+func TestSearchService_SortsByInsertedAtByDefault(t *testing.T) {
 	base := time.Date(2025, time.January, 1, 0, 0, 0, 0, time.UTC)
 	items := []Item{
-		{ID: "older-inserted", ItemType: "movie", TorrentName: "Older Inserted", ProviderSlug: "test", ProviderURL: "https://example.com/older-inserted", MagnetURI: "magnet:?xt=urn:btih:older-inserted", MagnetXT: "urn:btih:older-inserted", Languages: []string{"pt-BR"}, InsertedAt: base.Add(1 * time.Hour), UpdatedAt: base.Add(1 * time.Hour)},
-		{ID: "newer-updated", ItemType: "movie", TorrentName: "Newer Updated", ProviderSlug: "test", ProviderURL: "https://example.com/newer-updated", MagnetURI: "magnet:?xt=urn:btih:newer-updated", MagnetXT: "urn:btih:newer-updated", Languages: []string{"pt-BR"}, InsertedAt: base, UpdatedAt: base.Add(3 * time.Hour)},
+		{ID: "older-inserted", ItemType: "movie", TorrentName: "Older Inserted", ProviderSlug: "test", ProviderURL: "https://example.com/older-inserted", MagnetURI: "magnet:?xt=urn:btih:older-inserted", MagnetXT: "urn:btih:older-inserted", Languages: []string{"pt-BR"}, InsertedAt: base.Add(1 * time.Hour), UpdatedAt: base.Add(5 * time.Hour)},
+		{ID: "newer-inserted", ItemType: "movie", TorrentName: "Newer Inserted", ProviderSlug: "test", ProviderURL: "https://example.com/newer-inserted", MagnetURI: "magnet:?xt=urn:btih:newer-inserted", MagnetXT: "urn:btih:newer-inserted", Languages: []string{"pt-BR"}, InsertedAt: base.Add(3 * time.Hour), UpdatedAt: base.Add(1 * time.Hour)},
 	}
 
 	service := Service{items: items}
@@ -201,8 +201,11 @@ func TestSearchService_SortsByUpdatedAtWhenPresent(t *testing.T) {
 	if len(results.Items) != 2 {
 		t.Fatalf("len(items) = %d, want 2", len(results.Items))
 	}
-	if got := results.Items[0].ID; got != "newer-updated" {
-		t.Fatalf("first result id = %q, want newer-updated", got)
+	if got := results.Items[0].ID; got != "newer-inserted" {
+		t.Fatalf("first result id = %q, want newer-inserted", got)
+	}
+	if got := results.Items[1].ID; got != "older-inserted" {
+		t.Fatalf("second result id = %q, want older-inserted", got)
 	}
 }
 

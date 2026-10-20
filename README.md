@@ -91,7 +91,7 @@ curl -I http://localhost:8080/health
 
 - `GET /v1/search/`
 
-A busca usa filtro por query string. Os parâmetros atualmente aceitos pelo handler HTTP são:
+A busca usa filtro por query string. Por padrão, os resultados são ordenados por `inserted_at` em ordem decrescente, exibindo os itens mais recentes primeiro. Os parâmetros atualmente aceitos pelo handler HTTP são:
 
 | Parâmetro | Tipo | Descrição | Valor padrão |
 | --- | --- | --- | --- |
