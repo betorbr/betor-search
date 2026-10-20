@@ -18,8 +18,24 @@ import (
 )
 
 type Episode struct {
-	Number int    `json:"number"`
-	Title  string `json:"title,omitempty"`
+	Season  int `json:"season,omitempty"`
+	Episode int `json:"episode,omitempty"`
+}
+
+func (e *Episode) UnmarshalJSON(data []byte) error {
+	type episodeAlias struct {
+		Season  int `json:"season"`
+		Episode int `json:"episode"`
+	}
+
+	var aux episodeAlias
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	e.Season = aux.Season
+	e.Episode = aux.Episode
+	return nil
 }
 
 type Item struct {
@@ -558,7 +574,7 @@ func matchQuery(item Item, query string, filter SearchFilter) bool {
 		matched := false
 		for _, episode := range item.Episodes {
 			for _, target := range filter.Episode {
-				if episode.Number == target {
+				if episode.Episode == target {
 					matched = true
 					break
 				}
@@ -572,6 +588,25 @@ func matchQuery(item Item, query string, filter SearchFilter) bool {
 		}
 	}
 	return true
+}
+
+func parseIntList(values string) []int {
+	if strings.TrimSpace(values) == "" {
+		return nil
+	}
+	parsed := make([]int, 0, 4)
+	for _, part := range strings.Split(values, ",") {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		value, err := strconv.Atoi(part)
+		if err != nil {
+			continue
+		}
+		parsed = append(parsed, value)
+	}
+	return parsed
 }
 
 func containsInt(values []int, targets []int) bool {
@@ -837,6 +872,12 @@ func (s Service) ParseHTTPQuery(query string) SearchFilter {
 	}
 	if values["tmdb_id"] != "" {
 		filter.TMDBID = values["tmdb_id"]
+	}
+	if values["season"] != "" {
+		filter.Season = parseIntList(values["season"])
+	}
+	if values["episode"] != "" {
+		filter.Episode = parseIntList(values["episode"])
 	}
 	if values["q"] != "" {
 		filter.Q = values["q"]

@@ -115,6 +115,63 @@ func TestDecodeItems_AllowsSingleItemObject(t *testing.T) {
 	}
 }
 
+func TestDecodeItems_MapsSeasonAndEpisodeFieldsFromSourcePayload(t *testing.T) {
+	body := []byte(`{
+		"id": "tv-1",
+		"provider_slug": "hdrtorrents",
+		"provider_url": "https://example.com/tv",
+		"item_type": "tv",
+		"magnet_uri": "magnet:?xt=urn:btih:1",
+		"magnet_xt": "urn:btih:1",
+		"torrent_name": "Series S02",
+		"episodes": [
+			{"season": 2, "episode": 10},
+			{"season": 2, "episode": 1}
+		],
+		"seasons": [2],
+		"inserted_at": "2024-01-01T00:00:00Z"
+	}`)
+
+	items, err := decodeItems(body)
+	if err != nil {
+		t.Fatalf("decodeItems() returned error: %v", err)
+	}
+	if len(items) != 1 {
+		t.Fatalf("len(items) = %d, want 1", len(items))
+	}
+	if got, want := len(items[0].Episodes), 2; got != want {
+		t.Fatalf("len(episodes) = %d, want %d", got, want)
+	}
+	if got, want := items[0].Episodes[0].Season, 2; got != want {
+		t.Fatalf("episodes[0].Season = %d, want %d", got, want)
+	}
+	if got, want := items[0].Episodes[0].Episode, 10; got != want {
+		t.Fatalf("episodes[0].Episode = %d, want %d", got, want)
+	}
+	if got, want := items[0].Seasons[0], 2; got != want {
+		t.Fatalf("seasons[0] = %d, want %d", got, want)
+	}
+}
+
+func TestParseHTTPQuery_ParsesSeasonAndEpisodeFilters(t *testing.T) {
+	filter := Service{}.ParseHTTPQuery("season=2&episode=10,11")
+	if got, want := len(filter.Season), 1; got != want {
+		t.Fatalf("len(filter.Season) = %d, want %d", got, want)
+	}
+	if got, want := filter.Season[0], 2; got != want {
+		t.Fatalf("filter.Season[0] = %d, want %d", got, want)
+	}
+	if got, want := len(filter.Episode), 2; got != want {
+		t.Fatalf("len(filter.Episode) = %d, want %d", got, want)
+	}
+	if got, want := filter.Episode[0], 10; got != want {
+		t.Fatalf("filter.Episode[0] = %d, want %d", got, want)
+	}
+	if got, want := filter.Episode[1], 11; got != want {
+		t.Fatalf("filter.Episode[1] = %d, want %d", got, want)
+	}
+}
+
 func TestService_RespectsConfiguredMinuteInterval(t *testing.T) {
 	t.Setenv("BETOR_SEARCH_UPDATE_INTERVAL_MINUTES", "1")
 	service := NewService("https://example.com", 0)
