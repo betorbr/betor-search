@@ -96,6 +96,8 @@ A busca usa filtro por query string. Por padrão, os resultados são ordenados p
 | `item_type` | string | Filtra por tipo do item: `movie` ou `tv`. | vazio |
 | `imdb_id` | string | Filtro exato por IMDb ID. | vazio |
 | `tmdb_id` | string | Filtro exato por TMDb ID. | vazio |
+| `season` | integer/lista | Filtra por temporada (aceita lista separada por vírgulas). | vazio |
+| `episode` | integer/lista | Filtra por episódio (aceita lista separada por vírgulas). | vazio |
 | `page` | integer | Página de resultados. Deve ser maior que zero. | `1` |
 | `size` | integer | Quantidade de itens por página. Aceita até `100`. | `50` |
 
@@ -104,7 +106,7 @@ Exemplos:
 ```bash
 curl "http://localhost:8080/v1/search/?q=Dune&page=1&size=10"
 curl "http://localhost:8080/v1/search/?item_type=movie&imdb_id=tt0000001&page=1&size=20"
-curl "http://localhost:8080/v1/search/?q=the+office&item_type=tv&tmdb_id=123&page=1&size=10"
+curl "http://localhost:8080/v1/search/?q=the+office&item_type=tv&tmdb_id=123&season=2&episode=10&page=1&size=10"
 ```
 
 Resposta esperada:
@@ -133,7 +135,6 @@ Resposta esperada:
 }
 ```
 
-Observação: o filtro interno `season` e `episode` existe na lógica de busca, mas o parser HTTP atual não os lê da query string. Portanto, os filtros realmente expostos pela rota `/v1/search/` no código atual são `q`, `item_type`, `imdb_id`, `tmdb_id`, `page` e `size`.
 
 ## Desenvolvimento
 

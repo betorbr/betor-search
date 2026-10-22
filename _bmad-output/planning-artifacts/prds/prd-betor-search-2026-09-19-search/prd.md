@@ -97,7 +97,7 @@ Para a primeira entrega, os filtros devem cobrir os inputs do Cardigann definido
 - `tmdb_id`
 - `item_type`
 - `season`
-- `episode` (campo `ep` da busca do cardigann)
+- `episode`
 - `page`
 - `size`
 
@@ -162,7 +162,7 @@ Consequências testáveis:
 ## 10. Decisões Confirmadas
 - [DECISION] O catálogo deve usar o endpoint público `https://v1.betor.top/download-items/` como fonte padrão.
 - [DECISION] O sincronismo do catálogo não deve depender de autenticação básica nem de credenciais armazenadas em ambiente.
-- [DECISION] O endpoint `/v1/search/` deve cobrir os inputs do Cardigann em [betor-search.yml](betor-search.yml), incluindo `q`, `imdb_id`, `tmdb_id`, `item_type`, `season`, `episode` e `ep`.
+- [DECISION] O endpoint `/v1/search/` deve cobrir os inputs do Cardigann em [betor-search.yml](betor-search.yml), incluindo `q`, `imdb_id`, `tmdb_id`, `item_type`, `season` e `episode`.
 - [DECISION] O status do health do componente deve usar `UP`, `DOWN` e `DEGRADED`, seguindo esta regra: `UP` quando a última sincronização foi bem-sucedida; `DEGRADED` quando a última tentativa falhou, mas há dados em memória válidos; `DOWN` quando nunca houve carregamento com sucesso.
 - [DECISION] O componente de catálogo é crítico, mas a resposta geral do health só deve ser `DOWN` se o componente estiver em `DOWN`.
 
