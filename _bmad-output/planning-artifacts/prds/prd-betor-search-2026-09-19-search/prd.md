@@ -1,45 +1,44 @@
 ---
-title: Betor Search - Endpoint Search com Cache de Catalogo
+title: Betor Search - Endpoint Público de Catalogo
 status: draft
 created: 2026-09-19
-updated: 2026-09-19
+updated: 2026-10-21
 ---
 
-# PRD: Betor Search - Endpoint Search com Cache de Catálogo
+# PRD: Betor Search - Endpoint Público de Catálogo
 
 ## 0. Propósito do Documento
-Este PRD define a próxima entrega do Betor Search: o endpoint de busca `/v1/search/` alimentado por um catálogo local em memória, atualizado periodicamente com os itens exportados pela API do BeTor por meio do endpoint `/v1/admin/download-items/`.
+Este PRD atualiza a entrega do Betor Search para refletir o novo comportamento do BeTor: o dump de itens do catálogo agora é público e está disponível em `https://v1.betor.top/download-items/`.
 
-O objetivo é permitir busca rápida e estável sobre os itens disponíveis no BeTor, sem depender de consultas em tempo real a cada request, mantendo o serviço resiliente e previsível para uso em indexadores e integrações locais.
+A mudança exige alinhar o comportamento padrão do serviço para esse endpoint público, remover qualquer necessidade de autenticação na sincronização do catálogo e manter a documentação operacional atualizada com exemplos de execução via Docker e binário compilado.
 
 ## 1. Visão
-A busca da camada Betor Search deve funcionar como uma interface de consulta sobre um catálogo local consolidado e sincronizado periodicamente. O sistema deve baixar o dump completo de itens do BeTor, carregar esse payload na memória ao iniciar, manter atualização periódica conforme intervalo configurável, e atender os filtros do endpoint `/v1/search/` principal do projeto.
-
-Esse passo é o fundamento para a próxima geração de uso do projeto em Prowlarr, explorando o contrato já definido em [docs/betor/openapi.json](docs/betor/openapi.json) e o arquivo Cardigann em [betor-search.yml](betor-search.yml).
+A camada Betor Search deve continuar funcionando como uma interface de consulta sobre um catálogo local em memória, porém usando o endpoint público do BeTor como fonte padrão de sincronização. O sistema deve baixar o dump completo de itens no início da execução e em intervalos configurados, sem depender de headers de autenticação, mantendo o serviço simples de self-hosting e compatível com indexadores e integrações locais.
 
 ## 2. Contexto e base técnica
-- A API do BeTor expõe `/v1/admin/download-items/` para baixar o catálogo completo de itens em JSON.
-- O payload pode vir em diferentes estruturas, incluindo um único objeto quando o exemplo de teste é reduzido, mas em produção deve incluir todos os itens do catálogo.
+- O BeTor expõe o dump do catálogo em `https://v1.betor.top/download-items/` sem exigir autenticação.
+- O serviço deve considerar esse endpoint como padrão para bootstrapping e atualização do catálogo em memória.
 - O projeto já define endpoints versionados em `/v1` e um arquivo Cardigann para indexação no Prowlarr.
-- A aplicação precisa de um componente de sincronização que garanta: carregamento inicial, atualização automática em background e status observável.
+- A aplicação precisa de um componente de sincronização que garanta carregamento inicial, atualização automática em background e status observável.
+- A autenticação do cliente do BeTor deixou de ser parte da estratégia operacional da busca local.
 
 ## 3. Usuário-alvo
-- Desenvolvedor do projeto responsável por manter o catálogo e os endpoints em `/v1`.
-- Operador/self-hosted que usa a API para buscas rápidas de filmes e séries.
-- Indexadores e integrações que consultam dados locais em memória em vez de depender de scraping direto do BeTor.
+- Desenvolvedor do projeto responsável pela manutenção do catálogo e dos endpoints em `/v1`.
+- Operador/self-hosted que executa o serviço localmente com mínimos requisitos de configuração.
+- Indexadores e integrações que consultam dados locais em memória sem depender de credenciais internas.
 
 ## 4. Jornadas-chave
 ### UJ-1. Inicialização da aplicação
 - Contexto: serviço sobe em ambiente local ou de produção.
 - Entrada: aplicação iniciada com configuração padrão ou por variáveis de ambiente.
-- Caminho: sistema carrega o catálogo inicial, registra a execução e expõe status via health.
-- Resolução: o serviço fica disponível e pronto para respostas de busca.
+- Caminho: sistema carrega o catálogo inicial a partir do endpoint público e registra a execução.
+- Resolução: o serviço fica disponível e pronto para respostas de busca sem exigir credenciais.
 
 ### UJ-2. Atualização periódica do catálogo
 - Contexto: aplicação já está rodando.
 - Entrada: intervalo configurado de atualização.
-- Caminho: scheduler dispara a atualização; a aplicação baixa o dump de `/v1/admin/download-items/`, substitui ou mescla em memória e registra timestamp de última execução.
-- Resolução: catálogo atualiza sem necessidade de reinicialização do processo.
+- Caminho: scheduler dispara a atualização; a aplicação baixa o dump de `https://v1.betor.top/download-items/`, substitui o catálogo em memória e registra timestamp da última execução.
+- Resolução: catálogo atualiza sem reinicialização do processo nem envio de header de autenticação.
 
 ### UJ-3. Consulta de busca
 - Contexto: catálogo já carregado.
@@ -50,11 +49,11 @@ Esse passo é o fundamento para a próxima geração de uso do projeto em Prowla
 ## 5. Requisitos Funcionais
 
 ### 5.1 Componente de catálogo em memória
-#### FR-1: Carregar catálogo no bootstrap
-Ao iniciar a aplicação, o sistema deve buscar o dump de itens a partir do endpoint `/v1/admin/download-items/` e carregar os resultados em memória.
+#### FR-1: Carregar catálogo no bootstrap usando endpoint público
+Ao iniciar a aplicação, o sistema deve buscar o dump de itens a partir de `https://v1.betor.top/download-items/` e carregar os resultados em memória.
 
 Consequências testáveis:
-- A aplicação consegue iniciar mesmo sem catálogo prévio.
+- A aplicação consegue iniciar com a configuração padrão sem qualquer credencial.
 - No primeiro boot, o componente cria estrutura interna de catálogo e registra o momento da carga inicial.
 - Se a carga falhar, o status do componente sinaliza erro e o health reflete esse cenário.
 
@@ -72,17 +71,26 @@ O componente de catálogo deve expor ao menos: status atual, última execução,
 
 Consequências testáveis:
 - O health usa esse status para decidir se o serviço está UP ou DEGRADED/ERROR.
-- O timestamp da última execução pode ser consultado em resposta de endpoint/health ou estrutura do componente.
+- O timestamp da última execução pode ser consultado em resposta de endpoint `/health` ou estrutura do componente.
 
-### 5.2 Endpoint `/v1/search/`
-#### FR-4: Consultar itens em memória
+### 5.2 Remoção da autenticação na sincronização
+#### FR-4: Não exigir Basic Auth para o dump
+O fluxo de sincronização do catálogo não deve depender de `Authorization: Basic ...`, nem de variáveis de ambiente que codifiquem segredos para a API do BeTor.
+
+Consequências testáveis:
+- O valor padrão da URL de sincronização não inclui qualquer credencial.
+- O código e a documentação não referenciam `BETOR_SEARCH_API_AUTHORIZATION_BASIC_VALUE` como requisito da operação local.
+- A execução com ambiente padrão funciona sem segredo, sem header extra e sem falha por ausência de credencial.
+
+### 5.3 Endpoint `/v1/search/`
+#### FR-5: Consultar itens em memória
 O endpoint `/v1/search/` deve consultar o catálogo em memória, respeitando parâmetros de pesquisa e paginação já definidos no OpenAPI.
 
 Consequências testáveis:
 - Requisições com `q` e filtros básicos retornam resultados do catálogo local.
-- A resposta usa o formato `SearchPage[ItemSchema]` compatível com o contrato do projeto.
+- A resposta usa o formato compatível com o contrato do projeto.
 
-#### FR-5: Suporte a filtros mínimos da primeira entrega
+#### FR-6: Suporte a filtros mínimos da primeira entrega
 Para a primeira entrega, os filtros devem cobrir os inputs do Cardigann definidos em [betor-search.yml](betor-search.yml), incluindo:
 - `q`
 - `imdb_id`
@@ -99,8 +107,8 @@ Consequências testáveis:
 - Filtros por `movie` e `tv` funcionam corretamente.
 - A lógica de busca do endpoint `/v1/search/` permanece compatível com a definição do indexador.
 
-### 5.3 Componente de health
-#### FR-6: Incluir status do catálogo no health
+### 5.4 Componente de health
+#### FR-7: Incluir status do catálogo no health
 O endpoint `/health` deve incorporar o estado do componente de catálogo como parte de sua resposta.
 
 Consequências testáveis:
@@ -109,7 +117,7 @@ Consequências testáveis:
 - O serviço só fica com health geral `DOWN` quando o componente de catálogo estiver em `DOWN`.
 - O componente é crítico, mas não deve repassar `DOWN` para o serviço em cenários em que ainda exista cache válido em memória.
 
-#### FR-7: Explicar a última execução
+#### FR-8: Explicar a última execução
 O health deve informar quando a última sincronização foi executada e qual foi o resultado.
 
 Consequências testáveis:
@@ -117,29 +125,33 @@ Consequências testáveis:
 - O componente reporta `UP` quando a última atualização foi bem-sucedida.
 - O componente reporta `DEGRADED` quando a última tentativa falhou, mas o sistema ainda possui dados em memória válidos.
 - O componente reporta `DOWN` quando nunca houve carregamento com sucesso.
-- Quando a execução falhar, a resposta mantém sinal de erro e o timestamp da última execução ainda é registrado.
 
-## 6. Requisitos Não Funcucionais
+## 6. Requisitos Não Funcionais
 - NFR-1: a sincronização deve ser tolerante a falha; erros de rede ou payload inválido não devem derrubar o serviço.
-- NFR-2: o carregamento inicial deve ser eficiente para catalogos medianos ou grandes, usando processamento em memória e paginação se necessário.
-- NFR-3: as variáveis de ambiente devem seguir convenção simples e legível para self-hosting.
+- NFR-2: o carregamento inicial deve ser eficiente para catálogos médios ou grandes, usando processamento em memória e paginação se necessário.
+- NFR-3: as variáveis de ambiente devem seguir convenção simples e legível para self-hosting, sem segredos quando não são necessários.
 - NFR-4: o health deve continuar simples para monitoramento básico, sem expor detalhes internos de implementação em excesso.
+- NFR-5: a documentação operacional deve incluir instruções de execução com Docker e com binário compilado, com exemplos prontos para uso.
 
 ## 7. Variáveis de ambiente
 
 ### 7.1 Configuração da sincronização
+- `BETOR_SEARCH_DOWNLOAD_ITEMS_URL` — URL completa do dump público de itens do catálogo. Padrão: `https://v1.betor.top/download-items/`.
 - `BETOR_SEARCH_UPDATE_INTERVAL_MINUTES` — intervalo em minutos para atualização do catálogo. Padrão: `30`.
-- `BETOR_SEARCH_DOWNLOAD_ITEMS_URL` — URL da API de download do catálogo, caso a base seja sobrescrita em ambiente específico. Valor default: `/v1/admin/download-items/` no endpoint configurado da aplicação.
 
 ### 7.2 Observabilidade
 - `BETOR_SEARCH_COMPONENT_NAME` — nome do componente de catálogo para health e logs, opcional.
 
+### 7.3 Remoções
+- `BETOR_SEARCH_API_AUTHORIZATION_BASIC_VALUE` deixa de ser necessário e deve ser removido da documentação e das instruções de execução padrão.
+
 ## 8. Critérios de Aceite
-- CA-1: ao iniciar a aplicação, o catálogo é carregado a partir de `/v1/admin/download-items/` e fica disponível em memória.
-- CA-2: a atualização periódica acontece conforme variavel de ambiente e usa valor padrão de 30 minutos.
-- CA-3: o health inclui status do componente e timestamp da última execução.
-- CA-4: o endpoint `/v1/search/` consulta o catálogo local e respeita filtros principais.
-- CA-5: falhas de sincronização não impedem o serviço de responder status básico de saúde.
+- CA-1: ao iniciar a aplicação, o catálogo é carregado a partir de `https://v1.betor.top/download-items/` e fica disponível em memória.
+- CA-2: a atualização periódica acontece conforme variável de ambiente e usa valor padrão de 30 minutos.
+- CA-3: o sistema não exige header `Authorization` nem segredos para sincronizar o catálogo público.
+- CA-4: o health inclui status do componente e timestamp da última execução.
+- CA-5: o endpoint `/v1/search/` consulta o catálogo local e respeita filtros principais.
+- CA-6: a documentação operacional contém um bloco de exemplo com execução via Docker e via binário compilado.
 
 ## 9. Fora de Escopo
 - Redis, banco de dados ou cache distribuído.
@@ -148,13 +160,14 @@ Consequências testáveis:
 - Estrutura de ranking sofisticado ou scoring por qualidade de torrent.
 
 ## 10. Decisões Confirmadas
-- [DECISION] O catálogo deve ser substituído integralmente a cada atualização bem-sucedida, sem mesclagem incremental por item.
+- [DECISION] O catálogo deve usar o endpoint público `https://v1.betor.top/download-items/` como fonte padrão.
+- [DECISION] O sincronismo do catálogo não deve depender de autenticação básica nem de credenciais armazenadas em ambiente.
 - [DECISION] O endpoint `/v1/search/` deve cobrir os inputs do Cardigann em [betor-search.yml](betor-search.yml), incluindo `q`, `imdb_id`, `tmdb_id`, `item_type`, `season`, `episode` e `ep`.
 - [DECISION] O status do health do componente deve usar `UP`, `DOWN` e `DEGRADED`, seguindo esta regra: `UP` quando a última sincronização foi bem-sucedida; `DEGRADED` quando a última tentativa falhou, mas há dados em memória válidos; `DOWN` quando nunca houve carregamento com sucesso.
 - [DECISION] O componente de catálogo é crítico, mas a resposta geral do health só deve ser `DOWN` se o componente estiver em `DOWN`.
 
 ## 11. Assumptions
 - [ASSUMPTION] A primeira entrega usa catálogo em memória e não banco externo.
-- [ASSUMPTION] A sincronização usa o dump completo do endpoint `/v1/admin/download-items/` e não uma stream incremental.
+- [ASSUMPTION] A sincronização usa o dump completo do endpoint público e não uma stream incremental.
 - [ASSUMPTION] O componente de catálogo faz parte do health como um componente crítico de disponibilidade.
 - [ASSUMPTION] O status do catálogo será refletido no health seguindo as regras definidas em `UP`, `DEGRADED` e `DOWN`.

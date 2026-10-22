@@ -12,13 +12,13 @@ sources:
 # Betor Search API HTTP Go Fase 2
 
 ## Why
-O projeto precisa ir além do health check inicial e entregar o principal valor do produto: manter um catálogo em memória do BeTor e expor uma busca local por `/v1/search/`. A API do BeTor já fornece o dump de itens em `/v1/admin/download-items/`; a aplicação deve consumi-lo no boot e atualizar esse catálogo periodicamente sem depender de consultas em tempo real a cada request.
+O projeto precisa ir além do health check inicial e entregar o principal valor do produto: manter um catálogo em memória do BeTor e expor uma busca local por `/v1/search/`. A API pública do BeTor já fornece o dump de itens em `https://v1.betor.top/download-items/`; a aplicação deve consumi-lo no boot e atualizar esse catálogo periodicamente sem depender de consultas em tempo real a cada request.
 
 ## Capabilities
 
 - CAP-1
   - intent: Aplicação consegue inicializar com catálogo válido em memória.
-  - success: Ao subir a aplicação, ela chama `/v1/admin/download-items/`, processa a resposta e mantém o catálogo de itens disponível para consultas.
+  - success: Ao subir a aplicação, ela chama `https://v1.betor.top/download-items/`, processa a resposta e mantém o catálogo de itens disponível para consultas.
 
 - CAP-2
   - intent: Serviço mantém catálogo atualizado com periodicidade configurável.
@@ -56,5 +56,5 @@ O projeto precisa ir além do health check inicial e entregar o principal valor 
 
 ## Success signal
 
-A equipe sobe o serviço local, a inicialização carrega o catálogo do endpoint `/v1/admin/download-items/`, a atualização periódica reexecutes em intervalos configurados, o endpoint `/v1/search/` responde com dados do catálogo em memória e o `/health` informa status, timestamp e degradação/queda do componente crítico conforme a última sincronização.
+A equipe sobe o serviço local, a inicialização carrega o catálogo do endpoint público `https://v1.betor.top/download-items/`, a atualização periódica reexecutes em intervalos configurados, o endpoint `/v1/search/` responde com dados do catálogo em memória e o `/health` informa status, timestamp e degradação/queda do componente crítico conforme a última sincronização.
 

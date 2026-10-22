@@ -30,14 +30,14 @@ Betor Search is a Go 1.26 HTTP service that exposes a BeTor-backed search API an
 ## Conventions that differ from defaults
 
 - Keep the HTTP port configurable via `PORT` with a default of `8080`; do not hard-code the port in handlers or service code.
-- Use env-driven overrides for sync behavior: `BETOR_SEARCH_API_BASE_URL`, `BETOR_SEARCH_API_AUTHORIZATION_BASIC_VALUE`, and `BETOR_SEARCH_UPDATE_INTERVAL_MINUTES`, plus optional `BETOR_SEARCH_DOWNLOAD_ITEMS_URL`.
-- Treat `BETOR_SEARCH_API_AUTHORIZATION_BASIC_VALUE` as a pre-encoded Basic auth payload; empty means omit the header.
+- Use env-driven overrides for sync behavior: `BETOR_SEARCH_DOWNLOAD_ITEMS_URL` and `BETOR_SEARCH_UPDATE_INTERVAL_MINUTES`.
 - Keep service catalog sync in memory and refresh on the configured interval; do not persist catalog state into the repo.
+- The public catalog dump lives at `https://v1.betor.top/download-items/`; the service should prefer that endpoint over any admin-only URL.
 
 ## Known pitfalls
 
-- The server reads environment variables at startup and uses them to set the catalog sync interval and auth behavior; changing them during runtime is not the intended path.
-- A missing or empty `BETOR_SEARCH_API_AUTHORIZATION_BASIC_VALUE` is valid and must not trigger an auth header.
+- The server reads environment variables at startup and uses them to set the catalog sync interval and default catalog source; changing them during runtime is not the intended path.
+- The catalog sync process is public and should not require a Basic auth header.
 - The default health endpoint is `/health`; changing the route or the response shape without updating tests and callers is a compatibility break.
 
 <!-- /bmad:context -->

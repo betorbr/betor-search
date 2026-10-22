@@ -9,26 +9,25 @@ import (
 )
 
 func TestNewService_UsesDownloadItemsOverrideFromEnv(t *testing.T) {
-	t.Setenv("BETOR_SEARCH_API_BASE_URL", "https://api.betor.top/")
-	t.Setenv("BETOR_SEARCH_DOWNLOAD_ITEMS_URL", "https://example.com/custom-download/")
+	t.Setenv("BETOR_SEARCH_DOWNLOAD_ITEMS_URL", "https://example.com/custom-download/download-items/")
 
 	service := NewService("", time.Minute)
-	if got, want := service.baseURL, "https://example.com/custom-download/v1/admin/download-items/"; got != want {
-		t.Fatalf("baseURL = %q, want %q", got, want)
+	if got, want := service.downloadURL, "https://example.com/custom-download/download-items/"; got != want {
+		t.Fatalf("downloadURL = %q, want %q", got, want)
 	}
 }
 
-func TestService_Sync_UsesBasicAuthForMetadataDownloadURL(t *testing.T) {
+func TestService_Sync_UsesPublicDownloadItemsEndpointWithoutAuth(t *testing.T) {
 	var metadataRequested bool
 	var itemsRequested bool
 
 	var serverURL string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
-		case "/v1/admin/download-items/":
+		case "/download-items/":
 			metadataRequested = true
-			if got := r.Header.Get("Authorization"); got != "Basic YmV0b3I6c2VjcmV0" {
-				http.Error(w, "unauthorized", http.StatusUnauthorized)
+			if got := r.Header.Get("Authorization"); got != "" {
+				http.Error(w, "forbidden", http.StatusForbidden)
 				return
 			}
 			w.Header().Set("Content-Type", "application/json")
@@ -48,9 +47,7 @@ func TestService_Sync_UsesBasicAuthForMetadataDownloadURL(t *testing.T) {
 	defer server.Close()
 	serverURL = server.URL
 
-	t.Setenv("BETOR_SEARCH_API_AUTHORIZATION_BASIC_VALUE", "YmV0b3I6c2VjcmV0")
-
-	service := NewService(server.URL, time.Minute)
+	service := NewService(server.URL+"/download-items/", time.Minute)
 	if err := service.Sync(); err != nil {
 		t.Fatalf("Sync() returned error: %v", err)
 	}
@@ -199,7 +196,7 @@ func TestService_Sync_PreservesPriorCatalogAndMarksDegradedOnEmptyResponse(t *te
 	}))
 	defer server.Close()
 
-	service.baseURL = server.URL
+	service.downloadURL = server.URL
 	if err := service.Sync(); err == nil {
 		t.Fatal("Sync() expected error when upstream responds with an empty catalog")
 	}
@@ -231,7 +228,7 @@ func TestService_Sync_IgnoresStaleCatalogPayload(t *testing.T) {
 	}))
 	defer server.Close()
 
-	service.baseURL = server.URL
+	service.downloadURL = server.URL
 	if err := service.Sync(); err == nil {
 		t.Fatal("Sync() expected stale payload to be rejected")
 	}

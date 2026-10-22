@@ -8,7 +8,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
 	"sort"
 	"strconv"
@@ -176,7 +175,7 @@ type Service struct {
 	lastExecution      time.Time
 	lastSuccess        *time.Time
 	lastError          string
-	baseURL            string
+	downloadURL        string
 	updateInterval     time.Duration
 	startedAt          time.Time
 }
@@ -195,78 +194,30 @@ func ParseUpdateIntervalFromEnv() time.Duration {
 	return 30 * time.Minute
 }
 
-func NewService(baseURL string, interval time.Duration) Service {
+func NewService(downloadURL string, interval time.Duration) Service {
 	if interval <= 0 {
 		interval = ParseUpdateIntervalFromEnv()
 	}
-	if baseURL == "" {
-		baseURL = resolveBaseURLFromEnv()
+	if downloadURL == "" {
+		downloadURL = resolveDownloadItemsURLFromEnv()
 	}
 	return Service{
 		status:         "DOWN",
-		baseURL:        normalizeBaseURL(baseURL),
+		downloadURL:    strings.TrimSpace(downloadURL),
 		updateInterval: interval,
 		startedAt:      time.Now().UTC(),
 	}
 }
 
-func resolveBaseURLFromEnv() string {
+func resolveDownloadItemsURLFromEnv() string {
 	if override := strings.TrimSpace(os.Getenv("BETOR_SEARCH_DOWNLOAD_ITEMS_URL")); override != "" {
-		return normalizeBaseURL(stripCredentialsFromURL(override))
+		return strings.TrimSpace(override)
 	}
-	base := strings.TrimSpace(os.Getenv("BETOR_SEARCH_API_BASE_URL"))
-	if base == "" {
-		base = "https://api.betor.top/"
-	}
-	return strings.TrimRight(base, "/") + "/v1/admin/download-items/"
+	return "https://v1.betor.top/download-items/"
 }
 
-func normalizeBaseURL(baseURL string) string {
-	if baseURL == "" {
-		return "https://api.betor.top/v1/admin/download-items/"
-	}
-	baseURL = strings.TrimSpace(baseURL)
-	baseURL = stripCredentialsFromURL(baseURL)
-	if strings.Contains(baseURL, "/v1/admin/download-items/") {
-		return baseURL
-	}
-	return strings.TrimRight(baseURL, "/") + "/v1/admin/download-items/"
-}
-
-func stripCredentialsFromURL(rawURL string) string {
-	rawURL = strings.TrimSpace(rawURL)
-	if rawURL == "" {
-		return rawURL
-	}
-	parsed, err := url.Parse(rawURL)
-	if err == nil {
-		if parsed.User != nil {
-			parsed.User = nil
-			return parsed.String()
-		}
-		return rawURL
-	}
-
-	if idx := strings.Index(rawURL, "//"); idx >= 0 {
-		prefix := rawURL[:idx+2]
-		remainder := rawURL[idx+2:]
-		if at := strings.Index(remainder, "@"); at >= 0 {
-			return prefix + remainder[at+1:]
-		}
-	}
-	return rawURL
-}
-
-func basicAuthHeaderValue() (string, bool) {
-	value := strings.TrimSpace(os.Getenv("BETOR_SEARCH_API_AUTHORIZATION_BASIC_VALUE"))
-	if value == "" {
-		return "", false
-	}
-	return value, true
-}
-
-func NewServiceWithItems(items []Item, baseURL string, interval time.Duration) Service {
-	service := NewService(baseURL, interval)
+func NewServiceWithItems(items []Item, downloadURL string, interval time.Duration) Service {
+	service := NewService(downloadURL, interval)
 	service.items = append([]Item(nil), items...)
 	service.catalogItemsTotal = len(items)
 	if len(items) > 0 {
@@ -331,7 +282,7 @@ func (s Service) Search(query string, filter SearchFilter) (SearchResult, error)
 }
 
 func (s *Service) Sync() error {
-	url := s.baseURL
+	url := s.downloadURL
 	if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
 		url = "http://localhost:8080" + url
 	}
@@ -720,10 +671,6 @@ func (s *Service) fetchItemsFromURL(requestURL string) ([]Item, CatalogMetadata,
 	req, err := http.NewRequest(http.MethodGet, requestURL, nil)
 	if err != nil {
 		return nil, CatalogMetadata{}, err
-	}
-
-	if value, ok := basicAuthHeaderValue(); ok {
-		req.Header.Set("Authorization", "Basic "+value)
 	}
 
 	resp, err := client.Do(req)

@@ -11,22 +11,32 @@ Arquivo da definicao Cardigann atual:
 
 Esse arquivo pode ser usado como base para o indexer customizado no Prowlarr.
 
-## Pre-requisitos
-
-- Go 1.26+
-
 ## Executar o serviço
 
-Por padrão o serviço sobe na porta `8080`.
+### Binário
 
 ```bash
-go run ./cmd/server
+wget -qO betor-search https://github.com/betorbr/betor-search/releases/latest/download/betor-search
+chmod +x betor-search
+PORT=8080 ./betor-search
 ```
 
 Com porta customizada:
 
 ```bash
-PORT=9090 go run ./cmd/server
+PORT=9090 ./betor-search
+```
+
+### Docker
+
+```bash
+docker run --rm -p 8080:8080 ghcr.io/betorbr/betor-search:latest
+```
+
+Com porta customizada:
+
+```bash
+docker run --rm -p 9090:9090 -e PORT=9090 ghcr.io/betorbr/betor-search:latest
 ```
 
 ## Variáveis de ambiente
@@ -36,23 +46,10 @@ A aplicação lê as seguintes variáveis em tempo de inicialização:
 | Variável | Descrição | Valor padrão / comportamento |
 | --- | --- | --- |
 | `PORT` | Porta HTTP em que o serviço irá escutar. | `8080` |
-| `BETOR_SEARCH_API_BASE_URL` | Base da API pública do BeTor usada para montar o endpoint de download de itens. | `https://api.betor.top/` |
-| `BETOR_SEARCH_API_AUTHORIZATION_BASIC_VALUE` | Valor já codificado em Base64 para o header `Authorization: Basic ...`. Quando vazio, a aplicação não envia o header. | vazio |
+| `BETOR_SEARCH_DOWNLOAD_ITEMS_URL` | URL completa do dump público de itens do BeTor. Esse é o único valor de base necessário para sincronizar o catálogo. | `https://v1.betor.top/download-items/` |
 | `BETOR_SEARCH_UPDATE_INTERVAL_MINUTES` | Intervalo, em minutos, entre cada sincronização do catálogo em memória. | `30` |
-| `BETOR_SEARCH_DOWNLOAD_ITEMS_URL` | URL completa para sobrescrever o endpoint de dump de itens. Quando vazia, o serviço usa `BETOR_SEARCH_API_BASE_URL + /v1/admin/download-items/`. | opcional |
 
-Quando `BETOR_SEARCH_API_AUTHORIZATION_BASIC_VALUE` estiver preenchido, a aplicação envia o header `Authorization: Basic <valor>` na sincronização do catálogo. Quando vazio, o header é omitido.
-
-Exemplo de execução com variáveis customizadas:
-
-```bash
-PORT=9090 \
-BETOR_SEARCH_API_BASE_URL=https://api.betor.top/ \
-BETOR_SEARCH_API_AUTHORIZATION_BASIC_VALUE=$(printf '%s' 'betor:senha' | base64) \
-BETOR_SEARCH_UPDATE_INTERVAL_MINUTES=15 \
-BETOR_SEARCH_DOWNLOAD_ITEMS_URL=https://api.betor.top/v1/admin/download-items/ \
-go run ./cmd/server
-```
+A sincronização do catálogo agora usa o endpoint público do BeTor.
 
 ## Endpoints HTTP
 
@@ -138,15 +135,13 @@ Resposta esperada:
 
 Observação: o filtro interno `season` e `episode` existe na lógica de busca, mas o parser HTTP atual não os lê da query string. Portanto, os filtros realmente expostos pela rota `/v1/search/` no código atual são `q`, `item_type`, `imdb_id`, `tmdb_id`, `page` e `size`.
 
-## Rodar testes
+## Desenvolvimento
 
-Executa todos os testes do projeto:
+### Pre-requisitos
 
-```bash
-go test ./...
-```
+- Go 1.26+
 
-## Compilar
+### Compilar
 
 Compilar binário local do serviço:
 
@@ -158,4 +153,60 @@ Executar binário compilado do serviço:
 
 ```bash
 ./bin/server
+```
+
+
+### Rodar testes
+
+Executa todos os testes do projeto:
+
+```bash
+go test ./...
+```
+
+### Executando com Docker
+
+Construa a imagem localmente e rode o container:
+
+```bash
+docker build -t betor-search .
+docker run --rm -p 8080:8080 betor-search
+```
+
+Com porta customizada:
+
+```bash
+docker run --rm -p 9090:9090 -e PORT=9090 betor-search
+```
+
+### Executando com binário
+
+Compilar o binário localmente:
+
+```bash
+go build -trimpath -ldflags "-s -w" -o ./bin/betor-search ./cmd/server
+```
+
+Executar o binário:
+
+```bash
+PORT=8080 ./bin/betor-search
+```
+
+ou:
+
+```bash
+PORT=9090 ./bin/betor-search
+```
+
+### Executando com `go run`
+
+```bash
+go run ./cmd/server
+```
+
+Com porta customizada:
+
+```bash
+PORT=9090 go run ./cmd/server
 ```
