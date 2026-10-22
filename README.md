@@ -16,7 +16,7 @@ Esse arquivo pode ser usado como base para o indexer customizado no Prowlarr.
 ### Binário
 
 ```bash
-wget -qO betor-search https://github.com/betorbr/betor-search/releases/latest/download/betor-search
+wget -qO betor-search https://github.com/betorbr/betor-search/releases/latest/download/betor-search-linux-amd64
 chmod +x betor-search
 PORT=8080 ./betor-search
 ```
